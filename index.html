@@ -206,6 +206,9 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 .reroot{margin-top:14px;width:100%;border:1px solid var(--line);background:var(--bg);
   border-radius:9px;padding:8px;font-size:12.5px;cursor:pointer}
 .reroot:hover{background:var(--grid)}
+.reroot.link{margin-top:7px;border-style:dashed;color:var(--muted)}
+.reroot.link:hover{border-style:solid;color:var(--ink)}
+.reroot.link.ok{border-style:solid;border-color:var(--friuli);color:var(--friuli)}
 
 .zoom{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:6px;z-index:20}
 .zoom button{width:33px;height:33px;border:1px solid var(--line);background:var(--card);
@@ -325,6 +328,13 @@ const world=document.getElementById('world'), wires=document.getElementById('wir
       layer=document.getElementById('layer'), heads=document.getElementById('heads'),
       vp=document.getElementById('vp');
 let root='federico', sel=null, X={}, Y={}, alto={}, dibujados=[];
+
+/* Una rama se comparte con un link: ?r=anibal abre el árbol desde Aníbal
+   hacia atrás. No hace falta backend ni cuenta — este árbol ya es público,
+   así que el link no muestra nada que no estuviera a la vista. Lo único que
+   cambia es por dónde empieza a mirarse. */
+{ const pedida = new URLSearchParams(location.search).get('r');
+  if (pedida && P[pedida]) root = pedida; }
 
 /* ── el pedigrí: cada quien a la izquierda, sus padres a la derecha ── */
 function build(){
@@ -785,6 +795,7 @@ function show(id){
     (p.pr?`<div class="sub" style="font-style:italic">${p.pr}</div>`:'')+stamp;
   if(!dibujados.includes(id))
     h+=`<button class="reroot" data-root="${id}">Ver la ascendencia de ${p.n.split(' ')[0]}</button>`;
+  h+=`<button class="reroot link" data-copiar="${id}">Copiar el link de esta rama</button>`;
   if(p.note) h+=`<div class="note">${p.note}</div>`;
   if(p.f?.length){ h+='<div class="sec"><h3>Datos</h3>';
     p.f.forEach(([kk,v,w,ok])=>h+=`<div class="r"><div class="k">${kk}</div>`+
@@ -825,7 +836,23 @@ function show(id){
     addEventListener('keydown',function esc(ev){ if(ev.key==='Escape'){lb.remove();removeEventListener('keydown',esc);} });
     document.body.appendChild(lb); });
   sheetIn.querySelectorAll('[data-root]').forEach(b=>b.onclick=()=>{
-    root=b.dataset.root; syncRoots(); build(); show(root);});
+    fijarRaiz(b.dataset.root); show(root);});
+  /* Copiar el link. Si el navegador no da permiso al portapapeles —pasa en
+     http:// y en algunos móviles— se muestra la URL para copiarla a mano en
+     vez de dejar el botón haciendo nada. */
+  sheetIn.querySelectorAll('[data-copiar]').forEach(b=>{
+    const original=b.textContent;
+    b.onclick=async()=>{
+      const url=linkDeRama(b.dataset.copiar);
+      try{
+        await navigator.clipboard.writeText(url);
+        b.textContent='Link copiado ✓'; b.classList.add('ok');
+      }catch{
+        b.textContent=url; b.style.wordBreak='break-all';
+      }
+      setTimeout(()=>{ b.textContent=original; b.classList.remove('ok'); b.style.wordBreak=''; },3000);
+    };
+  });
 }
 function cerrar(){
   sheet.classList.remove('on'); sel=null;
@@ -838,14 +865,27 @@ addEventListener('keydown',e=>{ if(e.key==='Escape') cerrar(); });
 vp.addEventListener('pointerup',e=>{ if(!e.target.closest('.p,.sib') && !movio) cerrar(); });
 function syncRoots(){ document.querySelectorAll('#roots button').forEach(b=>
   b.setAttribute('aria-pressed',String(b.dataset.r===root))); }
-document.querySelectorAll('#roots button').forEach(b=>b.onclick=()=>{
-  root=b.dataset.r; syncRoots(); build(); });
+/* Cambiar de raíz reescribe la URL. Así lo que se está viendo es siempre lo
+   que se comparte: copiar de la barra de direcciones ya alcanza. */
+function fijarRaiz(k){
+  if(!P[k]) return;
+  root=k; syncRoots(); build();
+  const u=new URL(location.href); u.searchParams.set('r',k);
+  history.replaceState(null,'',u);
+}
+function linkDeRama(k){
+  const u=new URL(location.href); u.searchParams.set('r',k);
+  return u.toString();
+}
+document.querySelectorAll('#roots button').forEach(b=>b.onclick=()=>fijarRaiz(b.dataset.r));
 document.getElementById('q').oninput=e=>{
   const s=e.target.value.trim().toLowerCase();
   document.querySelectorAll('.p,.sib').forEach(n=>
     n.classList.toggle('mute', !!s && !P[n.dataset.id].n.toLowerCase().includes(s)));
 };
-build();
+/* syncRoots antes de dibujar: si la raíz vino por ?r=, el botón resaltado
+   tiene que ser ése y no el que quedó marcado en el HTML. */
+syncRoots(); build();
 </script>
 
 <script>
