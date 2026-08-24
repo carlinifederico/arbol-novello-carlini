@@ -462,14 +462,36 @@ ids.forEach(id=>{
   if(ref!==undefined) y[id]=y[ref]+SLOT*0.9;
 });
 
-// Desolapar dentro de cada columna sin alterar el orden vertical ya establecido
+/* Desolapar dentro de cada columna.
+   Una sola pasada hacia abajo empuja en cascada y termina alejando a un padre
+   de sus hijos. Con ida y vuelta —empujar los que chocan, y después tirar hacia
+   arriba de los que quedaron con holgura— el desplazamiento total es mínimo y
+   cada quien se queda cerca de donde el árbol lo quería. */
 const porGen={};
 ids.forEach(i=>(porGen[gen[i]] ||= []).push(i));
-Object.values(porGen).forEach(col=>{
+const desolapar=col=>{
   col.sort((a,b)=>y[a]-y[b]);
-  let last=-Infinity;
-  col.forEach(id=>{ y[id]=Math.max(y[id],last+SLOT); last=y[id]; });
-});
+  for(let i=1;i<col.length;i++)
+    y[col[i]]=Math.max(y[col[i]], y[col[i-1]]+SLOT);
+  for(let i=col.length-2;i>=0;i--)
+    y[col[i]]=Math.min(y[col[i]], y[col[i+1]]-SLOT);
+};
+Object.values(porGen).forEach(desolapar);
+
+/* Recentrar a los padres sobre sus hijos y volver a desolapar. Tres pasadas
+   alcanzan para que el dibujo se acomode; más no cambia nada. */
+for(let pass=0;pass<3;pass++){
+  for(let g=maxGen-1;g>=0;g--){
+    (porGen[g]||[]).forEach(id=>{
+      const ch=kids(id).filter(c=>y[c]!==undefined);
+      if(ch.length){
+        const ys=ch.map(c=>y[c]);
+        y[id]=(Math.min(...ys)+Math.max(...ys))/2;
+      }
+    });
+    desolapar(porGen[g]||[]);
+  }
+}
 const minY=Math.min(...ids.map(i=>y[i]));
 ids.forEach(i=>y[i]=y[i]-minY+PADY);
 
