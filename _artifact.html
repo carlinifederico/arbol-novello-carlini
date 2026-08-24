@@ -1100,12 +1100,16 @@ function encuadrar(){
   const W=parseFloat(world.style.width), H=parseFloat(world.style.height);
   const nk=Math.min((r.width-70)/W,(r.height-70)/H,1.15);
   if(nk<.34){
-    /* No centrado: corrido a la izquierda. Si la persona raíz queda en el
-       medio, la mitad de la pantalla es fondo vacío y no se ve para dónde
-       sigue el árbol. Puesta al 22% del ancho, los padres ya asoman por la
-       derecha y el gesto siguiente es obvio. */
-    const z=r.width<560?.85:.7;
-    hacia(z, r.width*.22-(X[root]+CW/2)*z, r.height/2-(altoCajaDe(root))/2*z-(Y[root])*z, false);
+    /* Ni todo el árbol ni una sola tarjeta. Lo que se encuadra es el núcleo:
+       la persona, sus padres y sus abuelos. Todo junto es un pedazo de árbol
+       que se entiende de una mirada, y deja claro para dónde seguir. Centrar
+       sólo en la raíz no servía: a ese zoom los padres caen fuera de pantalla
+       —arriba y abajo— y lo único que se ve es la barra vertical que los une. */
+    const foco=[root,...pa(root),...pa(root).flatMap(pa)].filter(i=>X[i]!==undefined);
+    const x0=Math.min(...foco.map(i=>X[i])), x1=Math.max(...foco.map(i=>X[i]+CW));
+    const y0=Math.min(...foco.map(i=>Y[i])), y1=Math.max(...foco.map(i=>Y[i]+altoCajaDe(i)));
+    const z=clamp(Math.min((r.width-32)/(x1-x0),(r.height-32)/(y1-y0),.95));
+    hacia(z,(r.width-(x1-x0)*z)/2-x0*z,(r.height-(y1-y0)*z)/2-y0*z,false);
   }
   else fit();
 }
