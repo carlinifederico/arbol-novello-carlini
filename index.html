@@ -298,7 +298,12 @@ function build(){
   const puestos=new Set(); let cursor=54, maxD=0;
 
   // alto de la caja = la persona más sus hermanos en chiquito debajo
-  const altoDe=id=>CH+(hermanos(id).length?hermanos(id).length*SIB+6:0);
+  /* La caja crece con lo que lleva adentro, así que la altura reservada tiene
+     que contarlo: si el layout usa una constante y la tarjeta trae además la
+     línea de profesión y una etiqueta, dos cajas terminan una encima de otra. */
+  const altoDe=id=>{const p=P[id];
+    return CH+(p.pr?18:0)+((p.open||p.dc)?16:0)
+      +(hermanos(id).length?hermanos(id).length*SIB+6:0);};
 
   function poner(id,d){
     if(!P[id]||puestos.has(id)) return Y[id];
