@@ -105,6 +105,9 @@ comment on column contributions.applied_ids is
   'Qué escribió la aprobación. Permite deshacerla sin adivinar.';
 
 -- ---------- 3. aprobar escribe en el árbol ----------
+/* La 0006 la creó devolviendo uuid; ahora devuelve jsonb con lo que escribió.
+   Postgres no deja cambiar el tipo de retorno con create or replace. */
+drop function if exists approve_contribution(uuid, text);
 create or replace function approve_contribution(p_id uuid, p_note text default null)
 returns jsonb language plpgsql security definer set search_path = public, pg_temp as $fn$
 declare
