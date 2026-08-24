@@ -558,11 +558,19 @@ function fit(){
    de puntitos. Así que si lo que entraría es ilegible, en vez de mostrar todo
    se arranca centrado en la persona raíz, a un tamaño en el que se lee. "Ver
    todo" sigue mostrando todo, pero porque uno lo pide. */
+const altoCajaDe=id=>{const p=P[id];return CH+(p.pr?18:0)+((p.open||p.dc)?16:0);};
 function encuadrar(){
   const r=vp.getBoundingClientRect();
   const W=parseFloat(world.style.width), H=parseFloat(world.style.height);
   const nk=Math.min((r.width-70)/W,(r.height-70)/H,1.15);
-  if(nk<.34) centrarEn(root, r.width<560?.85:.7);
+  if(nk<.34){
+    /* No centrado: corrido a la izquierda. Si la persona raíz queda en el
+       medio, la mitad de la pantalla es fondo vacío y no se ve para dónde
+       sigue el árbol. Puesta al 22% del ancho, los padres ya asoman por la
+       derecha y el gesto siguiente es obvio. */
+    const z=r.width<560?.85:.7;
+    hacia(z, r.width*.22-(X[root]+CW/2)*z, r.height/2-(altoCajaDe(root))/2*z-(Y[root])*z, false);
+  }
   else fit();
 }
 function centrarEn(id,nk){
