@@ -56,6 +56,10 @@ const RUTAS = [
 
 /* ── Conclusiones: lo que se buscó, lo que se encontró, y lo que no está ── */
 const HALLAZGOS = [
+  {tipo:'hallazgo', t:'El árbol llega a 1750',
+   b:'El índice napoleónico de Latisana de 1813 dio la pista —«Cagnolini Elisabetta Catterina, 11 giugno, atto 65»— y el acta entregó dos generaciones de un saque. Andrea Cagnolini figura como «del fu Giuseppe Cagnolini», y su mujer como «Marianna del fu Angelo Donate»: los dos padres nombrados, los dos ya muertos en 1813. Giuseppe Cagnolini, nacido alrededor de 1750, es hoy la persona más antigua de todo el árbol.'},
+  {tipo:'hallazgo', t:'Y no eran campesinos',
+   b:'El acta describe a Andrea con treinta y cuatro años y como POSSIDENTE —propietario— domiciliado en el Borgo dell'Annunziata de Latisana. Marianna, con treinta y uno, también consta como possidente por derecho propio, algo que no era habitual consignar de una mujer. Y Andrea firmó el acta de puño y letra: en ese mismo registro, varias actas vecinas terminan con la fórmula «si dichiararono illetterati».'},
   {tipo:'hallazgo', t:'Los Cagnolini sí son de Latisana',
    b:'De 602 resultados, los de coincidencia exacta están todos en Latisana, y permiten reconstruir tres generaciones desde Andrea Cagnolini y Marianna Donati. Aparece además Santa Pinzani, con hijos entre 1867 y 1880: una nieta suya nacida hacia 1900 se habría llamado, por costumbre, Santa Cagnolini.'},
   {tipo:'hallazgo', t:'Sicilia llega hasta ~1810',
