@@ -302,9 +302,13 @@ function build(){
   /* La caja crece con lo que lleva adentro, así que la altura reservada tiene
      que contarlo: si el layout usa una constante y la tarjeta trae además la
      línea de profesión y una etiqueta, dos cajas terminan una encima de otra. */
-  const altoDe=id=>{const p=P[id];
-    return CH+(p.pr?18:0)+((p.open||p.dc)?16:0)
-      +(hermanos(id).length?hermanos(id).length*SIB+6:0);};
+  /* La caja crece con lo que lleva adentro: la línea de profesión y las
+     etiquetas suman alto. Hay que medirla en un solo lugar, porque de esa
+     altura dependen dos cosas distintas —cuánto espacio reserva el layout y
+     dónde arrancan los hermanos— y si se calculan por separado se desfasan. */
+  const altoCaja=id=>{const p=P[id];
+    return CH+(p.pr?18:0)+((p.open||p.dc)?16:0);};
+  const altoDe=id=>altoCaja(id)+(hermanos(id).length?hermanos(id).length*SIB+6:0);
 
   function poner(id,d){
     if(!P[id]||puestos.has(id)) return Y[id];
@@ -438,7 +442,7 @@ function build(){
     hermanos(id).forEach((h,i)=>{
       const s=document.createElement('button');
       s.className='sib'; s.dataset.id=h;
-      s.style.cssText=`left:${X[id]+10}px;top:${Y[id]+CH+4+i*SIB}px;width:${CW-10}px`;
+      s.style.cssText=`left:${X[id]+10}px;top:${Y[id]+altoCaja(id)+4+i*SIB}px;width:${CW-10}px`;
       s.innerHTML=`<b>${P[h].n}</b>${yearOf(h)<9999?' '+yearOf(h):''}`;
       s.title=`${P[h].n} · hermano/a de ${P[id].n}`;
       s.onclick=e=>{e.stopPropagation();show(h);};
@@ -457,56 +461,94 @@ function build(){
    en un trackpad, deslizar dos dedos es desplazarse. Ahora la rueda desplaza y
    el zoom se pide — con pinza, con Ctrl, o con los botones. Nadie vuelve a
    perder el árbol de vista por arrimar dos dedos.                            */
-const K_MIN=.15, K_MAX=2.8;
+const K_MIN=.12, K_MAX=3.2;
 let k=1,tx=0,ty=0, kObj=1,txObj=0,tyObj=0, anim=null;
-const pinta=()=>world.style.transform=`translate(${tx}px,${ty}px) scale(${k})`;
+const QUIETO=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp=v=>Math.min(K_MAX,Math.max(K_MIN,v));
+const pinta=()=>world.style.transform=`translate(${Math.round(tx*100)/100}px,${Math.round(ty*100)/100}px) scale(${k})`;
 const nivel=document.getElementById('nivel');
 function pinta2(){ pinta(); if(nivel) nivel.textContent=Math.round(k*100)+'%'; }
 
-/* Todo movimiento pasa por acá: se fija un destino y una animación corta lo
-   alcanza. Sin esto, cada zoom es un salto y uno pierde el hilo de dónde está. */
-function hacia(nk,ntx,nty,suave=true){
-  kObj=Math.min(K_MAX,Math.max(K_MIN,nk)); txObj=ntx; tyObj=nty;
-  if(!suave){ k=kObj; tx=txObj; ty=tyObj; pinta2(); return; }
+/* Un solo lazo de animación, y siempre el mismo. La versión anterior salía
+   temprano si ya había uno corriendo y además dejaba que los movimientos
+   instantáneos escribieran k mientras el lazo seguía vivo: los dos se pisaban
+   y el resultado era ese temblor raro al hacer zoom. Ahora hay un único punto
+   de verdad —el destino— y una sola función que lo alcanza. */
+function corre(){
   if(anim) return;
   const paso=()=>{
-    k+=(kObj-k)*.28; tx+=(txObj-tx)*.28; ty+=(tyObj-ty)*.28;
-    pinta2();
-    if(Math.abs(kObj-k)>.001||Math.abs(txObj-tx)>.5||Math.abs(tyObj-ty)>.5)
-      anim=requestAnimationFrame(paso);
-    else { k=kObj; tx=txObj; ty=tyObj; pinta2(); anim=null; }
+    const e=.3;
+    k+=(kObj-k)*e; tx+=(txObj-tx)*e; ty+=(tyObj-ty)*e;
+    if(Math.abs(kObj-k)>.0004||Math.abs(txObj-tx)>.3||Math.abs(tyObj-ty)>.3){
+      pinta2(); anim=requestAnimationFrame(paso);
+    }else{ k=kObj; tx=txObj; ty=tyObj; pinta2(); anim=null; }
   };
   anim=requestAnimationFrame(paso);
 }
+function frena(){ if(anim){cancelAnimationFrame(anim); anim=null;} kObj=k; txObj=tx; tyObj=ty; }
+function hacia(nk,ntx,nty,suave=true){
+  kObj=clamp(nk); txObj=ntx; tyObj=nty;
+  if(suave&&!QUIETO) corre();
+  else { if(anim){cancelAnimationFrame(anim);anim=null;} k=kObj; tx=txObj; ty=tyObj; pinta2(); }
+}
+/* El zoom se ancla en un punto de la pantalla: ese punto no se mueve. Se calcula
+   sobre el DESTINO, no sobre el estado actual, así varios pasos seguidos de
+   rueda componen bien en vez de arrastrar el árbol. */
 function zoomEn(nk,mx,my,suave=true){
-  nk=Math.min(K_MAX,Math.max(K_MIN,nk));
+  nk=clamp(nk);
   hacia(nk, mx-(mx-txObj)*(nk/kObj), my-(my-tyObj)*(nk/kObj), suave);
 }
 function fit(){
   const r=vp.getBoundingClientRect();
   const W=parseFloat(world.style.width), H=parseFloat(world.style.height);
-  const nk=Math.min((r.width-60)/W,(r.height-60)/H,1.15);
+  const nk=clamp(Math.min((r.width-70)/W,(r.height-70)/H,1.15));
   hacia(nk,(r.width-W*nk)/2,(r.height-H*nk)/2,false);
 }
 function centrarEn(id,nk){
   if(X[id]===undefined) return;
-  const r=vp.getBoundingClientRect(); const z=nk??Math.max(kObj,.75);
+  const r=vp.getBoundingClientRect(); const z=clamp(nk??Math.max(kObj,.75));
   hacia(z, r.width/2-(X[id]+CW/2)*z, r.height/2-(Y[id]+CH/2)*z);
 }
 
+/* ── Rueda ──
+   El problema en PC era éste: la rueda hacía pan. En un mouse común no hay
+   deltaX, así que girar la rueda desplazaba el árbol hacia arriba y hacia abajo
+   cuando lo que uno espera —en algo que se ve como un mapa— es acercarse.
+   Ahora se distingue el aparato: el mouse manda saltos grandes y sin deltaX,
+   el trackpad manda muchos deltas chicos y casi siempre con componente
+   horizontal. Mouse: zoom al cursor. Trackpad: desplazar con dos dedos, y
+   pellizcar para el zoom (el navegador manda ctrlKey en el pinch). */
+let ultimaRueda=0, trackpad=false;
 vp.addEventListener('wheel',e=>{
   e.preventDefault();
-  const r=vp.getBoundingClientRect();
-  if(e.ctrlKey||e.metaKey){                       // pinza del trackpad o Ctrl+rueda
-    zoomEn(kObj*Math.exp(-e.deltaY*0.01), e.clientX-r.left, e.clientY-r.top, false);
-  }else{                                          // rueda y trackpad: desplazar
-    hacia(kObj, txObj-e.deltaX, tyObj-e.deltaY, false);
+  const r=vp.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+
+  if(e.ctrlKey||e.metaKey){                       // pellizco del trackpad, o Ctrl+rueda
+    zoomEn(kObj*Math.exp(-e.deltaY*0.012), mx, my);
+    return;
+  }
+  if(e.shiftKey){                                 // desplazar en horizontal
+    hacia(kObj, txObj-(e.deltaY||e.deltaX), tyObj);
+    return;
+  }
+  // ¿mouse o trackpad? Un trackpad manda eventos seguidos, chicos y con deltaX.
+  const ahora=performance.now();
+  if(e.deltaX!==0 || (e.deltaMode===0 && Math.abs(e.deltaY)<40 && ahora-ultimaRueda<120)) trackpad=true;
+  else if(e.deltaMode!==0 || Math.abs(e.deltaY)>=40) trackpad=false;
+  ultimaRueda=ahora;
+
+  if(trackpad){ hacia(kObj, txObj-e.deltaX, tyObj-e.deltaY, false); }
+  else {
+    const paso=e.deltaMode===0 ? e.deltaY/100 : e.deltaY;   // una muesca = un paso
+    zoomEn(kObj*Math.pow(1.22,-paso), mx, my);
   }
 },{passive:false});
 
+/* ── Arrastrar ── directo, sin suavizado: la mano ya es el suavizado. */
 let drag=null, movio=false;
 vp.addEventListener('pointerdown',e=>{ if(e.target.closest('.p,.sib'))return;
-  if(anim){cancelAnimationFrame(anim);anim=null;} kObj=k;txObj=tx;tyObj=ty;
+  if(e.button!==0&&e.pointerType==='mouse')return;
+  frena();
   drag={x:e.clientX,y:e.clientY,tx,ty}; movio=false;
   vp.classList.add('drag'); vp.setPointerCapture(e.pointerId);});
 vp.addEventListener('pointermove',e=>{ if(!drag)return;
@@ -516,24 +558,24 @@ const stop=()=>{drag=null;vp.classList.remove('drag');};
 vp.addEventListener('pointerup',stop); vp.addEventListener('pointercancel',stop);
 vp.addEventListener('dblclick',e=>{ const c=e.target.closest('.p');
   const r=vp.getBoundingClientRect();
-  if(c) centrarEn(c.dataset.id,1.3); else zoomEn(kObj*1.5,e.clientX-r.left,e.clientY-r.top); });
+  if(c) centrarEn(c.dataset.id,1.3); else zoomEn(kObj*1.6,e.clientX-r.left,e.clientY-r.top); });
 
 document.getElementById('zin').onclick=()=>{const r=vp.getBoundingClientRect();
-  zoomEn(kObj*1.3,r.width/2,r.height/2);};
+  zoomEn(kObj*1.35,r.width/2,r.height/2);};
 document.getElementById('zout').onclick=()=>{const r=vp.getBoundingClientRect();
-  zoomEn(kObj/1.3,r.width/2,r.height/2);};
+  zoomEn(kObj/1.35,r.width/2,r.height/2);};
 document.getElementById('fit').onclick=fit;
 
 addEventListener('keydown',e=>{
   if(e.target.matches('input,textarea')) return;
-  const P_=90, r=vp.getBoundingClientRect();
+  const P_=e.shiftKey?320:110, r=vp.getBoundingClientRect();
   if(e.key==='ArrowLeft'){ hacia(kObj,txObj+P_,tyObj); e.preventDefault(); }
   else if(e.key==='ArrowRight'){ hacia(kObj,txObj-P_,tyObj); e.preventDefault(); }
   else if(e.key==='ArrowUp'){ hacia(kObj,txObj,tyObj+P_); e.preventDefault(); }
   else if(e.key==='ArrowDown'){ hacia(kObj,txObj,tyObj-P_); e.preventDefault(); }
-  else if(e.key==='+'||e.key==='='){ zoomEn(kObj*1.3,r.width/2,r.height/2); }
-  else if(e.key==='-'||e.key==='_'){ zoomEn(kObj/1.3,r.width/2,r.height/2); }
-  else if(e.key==='0'){ fit(); }
+  else if(e.key==='+'||e.key==='='){ zoomEn(kObj*1.35,r.width/2,r.height/2); e.preventDefault(); }
+  else if(e.key==='-'||e.key==='_'){ zoomEn(kObj/1.35,r.width/2,r.height/2); e.preventDefault(); }
+  else if(e.key==='0'){ fit(); e.preventDefault(); }
 });
 addEventListener('resize',()=>{ if(kObj<=.2) fit(); });
 
