@@ -780,6 +780,7 @@ const HALLAZGOS = [
 </script>
 <script>
 const ids=Object.keys(P);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 const pa=id=>(P[id]?.pa||[]).filter(x=>P[x]);
 const kids=id=>ids.filter(k=>(P[k].pa||[]).includes(id));
 const yearOf=id=>{const m=P[id].d?.match(/\d{4}/);return m?+m[0]:9999;};
