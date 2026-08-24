@@ -136,18 +136,23 @@ footer{border-top:1px solid var(--line);margin-top:38px;padding:28px 0 60px}
 <header><div class="wrap">
   <div class="kicker">Latisana · San Giorgio di Nogaro · Giarre · Acireale · Bella Vista · Mar del Plata</div>
   <h1>Pedigrí Novello · Carlini</h1>
-  <p class="lede">Los antepasados de Antonio, generación por generación. Cada persona lleva
-    los datos que se pudieron probar y el documento que los prueba. Tocá cualquier nombre.</p>
+  <p class="lede">La familia generación por generación, hacia arriba o hacia abajo. Cada persona
+    lleva los datos que se pudieron probar y el documento que los prueba. Tocá cualquier nombre.</p>
 </div></header>
 
 <div class="wrap">
   <div class="bar">
+    <div class="seg" role="group" aria-label="Sentido del árbol">
+      <button data-mode="asc" aria-pressed="true">↑ Antepasados</button>
+      <button data-mode="desc" aria-pressed="false">↓ Descendientes</button>
+    </div>
     <div class="seg" role="group" aria-label="Desde quién">
-      <button data-root="antonio" aria-pressed="true">Desde Antonio</button>
-      <button data-root="patricia" aria-pressed="false">Rama Novello</button>
-      <button data-root="anibal" aria-pressed="false">Rama Carlini</button>
+      <button data-root="antonio" aria-pressed="true">Antonio</button>
+      <button data-root="anibal" aria-pressed="false">Aníbal y Patricia</button>
+      <button data-root="luigi" aria-pressed="false">Luigi y Liliana</button>
+      <button data-root="giovanniF" aria-pressed="false">Fichera</button>
       <button data-root="santaC" aria-pressed="false">Cagnolini</button>
-      <button data-root="carloCag2" aria-pressed="false">Cagnolini · rama Andrea</button>
+      <button data-root="carloCag2" aria-pressed="false">Cagnolini · Andrea</button>
     </div>
     <div class="keys">
       <span class="k"><i class="dot" style="background:var(--friuli)"></i>Friuli</span>
@@ -162,8 +167,10 @@ footer{border-top:1px solid var(--line);margin-top:38px;padding:28px 0 60px}
     <div class="canvas" id="canvas"><svg class="links" id="links"></svg></div>
   </div>
   <p class="hint" style="margin-top:9px">
-    Cada columna es una generación. Las líneas van de hijo a padre y madre.
-    Las cajas punteadas son las cuatro fronteras: ahí se corta la documentación.
+    Cada columna es una generación. En <b>antepasados</b> las líneas van de cada persona a su padre
+    y a su madre; en <b>descendientes</b>, a sus hijos. Las cajas ámbar punteadas son las fronteras
+    donde se corta la documentación, y las líneas rotuladas <b>HIPÓTESIS</b> son vínculos probables
+    pero todavía sin acta que los pruebe.
   </p>
 
   <section style="margin-top:38px;border-top:1px solid var(--line);padding-top:26px">
@@ -265,9 +272,17 @@ patricia:{n:"Patricia Novello",d:"1954 – 2003",b:"friuli",pa:["luigi","liliana
   sib:["carmen","luisa"],
   c:[["Bella Vista 1954, Nacimientos, acta n. 166"],["Acta de defunción n. 251 I A, 2003"]]},
 francisco:{n:"Francisco Carlini",d:"1982",b:"arg",pa:["anibal","patricia"],
-  note:"Mellizo de Nicolás. No firma las aceptaciones de venta de 2025 que sí firman sus tres hermanos."},
-nicolas:{n:"Nicolás Carlini",d:"1982",b:"arg",pa:["anibal","patricia"],note:"Mellizo de Francisco."},
-bernardo:{n:"Bernardo Carlini",d:"1984",b:"arg",pa:["anibal","patricia"]},
+  note:"Mellizo de Nicolás. No firma las aceptaciones de venta de 2025 que sí firman sus tres hermanos.",
+  f:[["Nacimiento","1982"],["Mellizo","Nacido el mismo día que Nicolás"]]},
+nicolas:{n:"Nicolás Carlini",d:"1982",b:"arg",pa:["anibal","patricia"],
+  note:"Mellizo de Francisco.",
+  f:[["Nacimiento","1982"],["Mellizo","Nacido el mismo día que Francisco"]]},
+bernardo:{n:"Bernardo Carlini",d:"1984",b:"arg",pa:["anibal","patricia"],
+  f:[["Nacimiento","1984"]]},
+clara:{n:"Clara Canale",d:"—",b:"arg",
+  note:"Madre de Felipe y Facundo."},
+felipe:{n:"Felipe Carlini",d:"—",b:"arg",pa:["bernardo","clara"]},
+facundo:{n:"Facundo Carlini",d:"—",b:"arg",pa:["bernardo","clara"]},
 carmen:{n:"Carmen Novello",d:"?",b:"friuli",
   note:"Probable hermana de Patricia. Heredera testamentaria de Simón Pedro Bersano, expediente 93450/2019."},
 luisa:{n:"Luisa Marina Novello",d:"?",b:"friuli",
@@ -401,11 +416,21 @@ carloCag2:{n:"Carlo Cagnolini",d:"1859 – 1892",b:"friuli",pa:["giuseppeCag","t
 teresaMoz:{n:"Teresa Mozzoni",d:"?",b:"friuli",c:[["Latisana, Morti 1898"]]},
 };
 
-const GEN=[["Generación de Antonio","2017"],["Padres","1987 – 1989"],["Abuelos","1952 – 1954"],
-  ["Bisabuelos","1898 – 1929"],["Tatarabuelos","1869 – 1902"],["5.ª generación","~1840 – 1873"]];
+const GEN_ASC=[["Punto de partida",""],["Padres",""],["Abuelos",""],["Bisabuelos",""],
+  ["Tatarabuelos",""],["5.ª generación",""],["6.ª generación",""]];
+const GEN_DESC=[["Punto de partida",""],["Hijos",""],["Nietos",""],["Bisnietos",""],["Tataranietos",""]];
+
+/** Hijos de una persona: la relación inversa de `pa`. */
+function kidsOf(id){ return Object.keys(P).filter(k=>(P[k].pa||[]).includes(id)); }
+/** La otra madre o el otro padre de los hijos en común. */
+function partnersOf(id){
+  const s=new Set();
+  kidsOf(id).forEach(k=>(P[k].pa||[]).forEach(p=>{ if(p!==id&&P[p]) s.add(p); }));
+  return [...s];
+}
 
 const CW=214, CH=64, GAPX=52, GAPY=16, PADX=16, PADY=14;
-let root="antonio", sel=null;
+let root="antonio", mode="asc", sel=null;
 const canvas=document.getElementById('canvas'), links=document.getElementById('links'),
       axis=document.getElementById('axis'), stage=document.getElementById('stage');
 
@@ -414,14 +439,17 @@ function build(){
   links.innerHTML=''; axis.innerHTML='';
   const pos=new Map(); let cursor=PADY; let maxDepth=0;
 
+  const seen=new Set();
   (function place(id,depth){
-    if(!P[id]) return null;
+    if(!P[id]||seen.has(id)) return pos.get(id)?.y ?? null;
+    seen.add(id);
     maxDepth=Math.max(maxDepth,depth);
-    const pa=(P[id].pa||[]).filter(x=>P[x]);
+    // hacia arriba seguimos a los padres; hacia abajo, a los hijos
+    const next=(mode==='asc' ? (P[id].pa||[]) : kidsOf(id)).filter(x=>P[x]);
     let y;
-    if(!pa.length){ y=cursor; cursor+=CH+GAPY; }
+    if(!next.length){ y=cursor; cursor+=CH+GAPY; }
     else{
-      const ys=pa.map(p=>place(p,depth+1)).filter(v=>v!==null);
+      const ys=next.map(p=>place(p,depth+1)).filter(v=>v!==null);
       y=ys.length?(Math.min(...ys)+Math.max(...ys))/2:(cursor+=CH+GAPY,cursor-CH-GAPY);
     }
     pos.set(id,{x:PADX+depth*(CW+GAPX),y,depth});
@@ -433,22 +461,27 @@ function build(){
   links.setAttribute('viewBox',`0 0 ${W} ${H+46}`);
   links.setAttribute('width',W); links.setAttribute('height',H+46);
 
+  const GEN = mode==='asc' ? GEN_ASC : GEN_DESC;
   for(let d=0;d<=maxDepth;d++){
     const el=document.createElement('div'); el.style.width=(CW+GAPX)+'px';
-    el.innerHTML=`<b>${GEN[d]?GEN[d][0]:'Anteriores'}</b><span>${GEN[d]?GEN[d][1]:''}</span>`;
+    const years=[...pos.values()].filter(p=>p.depth===d);
+    el.innerHTML=`<b>${GEN[d]?GEN[d][0]:(mode==='asc'?'Anteriores':'Posteriores')}</b><span></span>`;
     axis.appendChild(el);
   }
 
   const NS='http://www.w3.org/2000/svg';
   pos.forEach((pt,id)=>{
-    (P[id].pa||[]).filter(x=>pos.has(x)).forEach(par=>{
+    const next=(mode==='asc' ? (P[id].pa||[]) : kidsOf(id));
+    next.filter(x=>pos.has(x)).forEach(par=>{
       const a=pos.get(id), b=pos.get(par);
       const x1=a.x+CW, y1=a.y+CH/2+46, x2=b.x, y2=b.y+CH/2+46, mid=x1+GAPX/2;
       const p=document.createElementNS(NS,'path');
       p.setAttribute('d',`M${x1} ${y1} H${mid} V${y2} H${x2}`);
       p.setAttribute('fill','none');
       p.setAttribute('stroke-width','1.4');
-      if(P[id].hyp){
+      // el flag de hipótesis vive siempre en el hijo, sea cual sea el sentido del dibujo
+      const hypLink = mode==='asc' ? P[id].hyp : P[par].hyp;
+      if(hypLink){
         // vínculo hipotético: se ve distinto del documentado, a propósito
         p.setAttribute('stroke','var(--open)');
         p.setAttribute('stroke-dasharray','2 4');
@@ -460,7 +493,7 @@ function build(){
         links.appendChild(t);
       } else {
         p.setAttribute('stroke','var(--line)');
-        if(P[par].open) p.setAttribute('stroke-dasharray','4 3');
+        if(P[par].open||P[id].open) p.setAttribute('stroke-dasharray','4 3');
       }
       links.appendChild(p);
     });
@@ -472,7 +505,10 @@ function build(){
     b.className='node'+(p.open?' op':'')+(id===sel?' on':'');
     b.dataset.b=p.b; b.dataset.id=id;
     b.style.cssText=`left:${pt.x}px;top:${pt.y+46}px;width:${CW}px;min-height:${CH}px`;
+    // hacia abajo mostramos con quién tuvo los hijos: si no, la pareja desaparece del dibujo
+    const mates = mode==='desc' ? partnersOf(id).filter(x=>!pos.has(x)) : [];
     b.innerHTML=`<span class="n">${p.n}</span><span class="d">${p.d}</span>`+
+      (mates.length?`<span class="d" style="color:var(--faint)">con ${mates.map(x=>P[x].n).join(' y ')}</span>`:'')+
       (p.open?'<span class="b open">frontera</span>':'')+(p.dc?'<span class="b dc">dante causa</span>':'');
     b.onclick=()=>open(id);
     canvas.appendChild(b);
@@ -512,10 +548,14 @@ function open(id){
 document.getElementById('close').onclick=()=>{sheet.classList.remove('open');
   document.querySelectorAll('.node').forEach(n=>n.classList.remove('on')); sel=null;};
 
-function syncSeg(){ document.querySelectorAll('.seg button').forEach(b=>
-  b.setAttribute('aria-pressed', String(b.dataset.root===root))); }
-document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+function syncSeg(){
+  document.querySelectorAll('[data-root]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.root===root)));
+  document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
+}
+document.querySelectorAll('[data-root]').forEach(b=>b.onclick=()=>{
   root=b.dataset.root; syncSeg(); build(); stage.scrollTo({left:0,behavior:'smooth'}); });
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{
+  mode=b.dataset.mode; syncSeg(); build(); stage.scrollTo({left:0,behavior:'smooth'}); });
 
 const QS=[
 ["Giovanni Novello: buscar donde no hay índices","Descartado en Latisana y en toda la provincia de Udine. Antenati corta en 1900 y FamilySearch en 1911, así que su nacimiento de ~1902 cae en un hueco que ningún archivo online cubre. La vía que no depende de índices es la lista di leva classe 1902 del Archivio di Stato di Udine."],
