@@ -147,12 +147,13 @@ footer{border-top:1px solid var(--line);margin-top:38px;padding:28px 0 60px}
       <button data-mode="desc" aria-pressed="false">↓ Descendientes</button>
     </div>
     <div class="seg" role="group" aria-label="Desde quién">
-      <button data-root="antonio" aria-pressed="true">Antonio</button>
-      <button data-root="anibal" aria-pressed="false">Aníbal y Patricia</button>
-      <button data-root="luigi" aria-pressed="false">Luigi y Liliana</button>
-      <button data-root="giovanniF" aria-pressed="false">Fichera</button>
-      <button data-root="santaC" aria-pressed="false">Cagnolini</button>
-      <button data-root="carloCag2" aria-pressed="false">Cagnolini · Andrea</button>
+      <button data-root="antonio" data-with="asc" aria-pressed="true">Antonio</button>
+      <button data-root="anibal" data-with="desc" aria-pressed="false">Los cuatro hermanos</button>
+      <button data-root="luigi" data-with="desc" aria-pressed="false">Luigi y Liliana</button>
+      <button data-root="giovanniF" data-with="desc" aria-pressed="false">Fichera</button>
+      <button data-root="antoninoC" data-with="asc" aria-pressed="false">Castorina</button>
+      <button data-root="santaC" data-with="asc" aria-pressed="false">Cagnolini</button>
+      <button data-root="carloCag2" data-with="asc" aria-pressed="false">Cagnolini · Andrea</button>
     </div>
     <div class="keys">
       <span class="k"><i class="dot" style="background:var(--friuli)"></i>Friuli</span>
@@ -412,9 +413,24 @@ antoninoC:{n:"Antonino Castorina",d:"1837 – 1905",b:"sicilia",pa:["salvatoreC"
   c:[["Acireale 1895, Matrimoni, atto n. 99"],
      ["Catania, Stato civile, defunción 22-ene-1905","Antonino Castorina, nato 1837 Acireale, di Salvatore e Angela Motta"],
      ["Diocesi di Acireale, matrimonio 3-giu-1860","figlio di Salvatore Castorina e Angilberga Motto"]]},
-veneraP:{n:"Venera Privitera",d:"~1840",b:"sicilia",
+veneraP:{n:"Venera Privitera",d:"~1840",b:"sicilia",pa:["francescoP","agataL"],
   f:[["Matrimonio","3 de junio de 1860, Acireale"]],
-  c:[["Acireale 1895, Matrimoni, atto n. 99"],["Diocesi di Acireale, matrimonio 3-giu-1860"]]},
+  c:[["Acireale 1895, Matrimoni, atto n. 99"],
+     ["Diocesi di Acireale, matrimonio 3-giu-1860","figlia di Francesco Privitera e Agata Leonardi"]]},
+francescoP:{n:"Francesco Privitera",d:"~1815",b:"sicilia",
+  note:"Hallado en el registro parroquial del matrimonio de su hija Venera, en 1860. Su nieto Francesco Castorina lleva su nombre, por la regla del segundo varón.",
+  c:[["Diocesi di Acireale, matrimonio 3-giu-1860"]]},
+agataL:{n:"Agata Leonardi",d:"~1818",b:"sicilia",
+  note:"Hallada en el mismo registro de 1860. Su bisnieta Agata Castorina y su tataranieta Haydée (probablemente Agata) llevan su nombre: el nombre viaja cuatro generaciones seguidas por la rama femenina.",
+  c:[["Diocesi di Acireale, matrimonio 3-giu-1860"]]},
+
+/* ---- Hermanos de Agata Castorina ---- */
+francescoCast:{n:"Francesco Castorina",d:"?",b:"sicilia",pa:["antoninoC","veneraP"],
+  note:"Hermano de Agata. Su nombre viene del abuelo materno, Francesco Privitera.",
+  c:[["Catania, Stato civile 1866-1929"]]},
+salvatoreCast:{n:"Salvatore Castorina",d:"?",b:"sicilia",pa:["antoninoC","veneraP"],
+  note:"Hermano de Agata. Su nombre viene del abuelo paterno, Salvatore Castorina. Que los dos hermanos lleven exactamente los nombres que la regla siciliana predice es una confirmación cruzada de toda la reconstrucción.",
+  c:[["Catania, Stato civile 1866-1929"]]},
 salvatoreC:{n:"Salvatore Castorina",d:"~1810",b:"sicilia",
   note:"Generación nueva, hallada por dos fuentes independientes: el acta de defunción civil de su hijo Antonino (1905) y el registro parroquial de su matrimonio (1860).",
   c:[["Catania, Stato civile, defunción de Antonino Castorina, 22-ene-1905"],
@@ -630,7 +646,10 @@ function syncSeg(){
   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
 }
 document.querySelectorAll('[data-root]').forEach(b=>b.onclick=()=>{
-  root=b.dataset.root; syncSeg(); build(); stage.scrollTo({left:0,behavior:'smooth'}); });
+  root=b.dataset.root;
+  // cada punto de entrada sabe en qué sentido tiene sentido mirarlo
+  if(b.dataset.with) mode=b.dataset.with;
+  syncSeg(); build(); stage.scrollTo({left:0,behavior:'smooth'}); });
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{
   mode=b.dataset.mode; syncSeg(); build(); stage.scrollTo({left:0,behavior:'smooth'}); });
 
