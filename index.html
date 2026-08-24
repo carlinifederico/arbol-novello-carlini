@@ -88,6 +88,19 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 .p.open{border-style:dashed;border-left-style:solid;background:var(--open-soft)}
 .p .nm{display:block;font-size:13.5px;font-weight:600;line-height:1.24}
 .p .yr{display:block;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
+.p .pr{display:block;font-size:10.5px;color:var(--faint);margin-top:3px;font-style:italic;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.docs{display:grid;gap:6px;margin-top:8px}
+.doc{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:baseline;
+  border:1px solid var(--hair);border-radius:9px;padding:8px 10px;background:var(--bg)}
+.doc .tipo{font-size:12.5px;font-weight:600;grid-column:1/-1}
+.doc .ref{font-size:11.5px;color:var(--muted);line-height:1.45;grid-column:1/-1}
+.doc .est{font-size:9px;letter-spacing:.07em;text-transform:uppercase;padding:1px 6px;border-radius:3px;
+  justify-self:start;grid-column:1/-1;margin-top:2px}
+.est-tengo{background:var(--friuli-soft);color:var(--friuli)}
+.est-online{background:var(--arg-soft);color:var(--arg)}
+.est-pedir{background:var(--open-soft);color:var(--open);border:1px dashed var(--open)}
+.privado{font-size:11px;color:var(--faint);line-height:1.5;margin-top:8px;font-style:italic}
 .p .tag{display:inline-block;margin-top:4px;font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;
   padding:1px 5px;border-radius:3px}
 .tag.f{background:var(--open-soft);color:var(--open);border:1px solid var(--open)}
@@ -410,6 +423,7 @@ function build(){
     b.style.cssText=`left:${X[id]}px;top:${Y[id]}px;width:${CW}px;min-height:${CH}px`;
     const cert = p.c?.length && !p.t && !p.hyp;
     b.innerHTML=`<span class="nm">${p.n}${cert?'<i class="cert" title="Respaldado por documentos">✓</i>':''}</span><span class="yr">${p.d}</span>`+
+      (p.pr?`<span class="pr" title="${p.pr}">${p.pr}</span>`:'')+
       (p.open?'<span class="tag f">frontera</span>':'')+
       (p.dc?'<span class="tag dc">dante causa</span>':'');
     b.onclick=e=>{e.stopPropagation();show(id);};
@@ -537,7 +551,8 @@ function show(id){
     :p.c?.length?'<span class="stamp st-doc">documentado</span>':'';
   const col = X[id]!==undefined ? Math.round((X[id]-40)/(CW+GX)) : null;
   const rel = col===0 ? '' : col>0 ? ' · ' + PARENTESCO(col).replace(/s$/,'').toLowerCase() + ' de ' + P[root].n.split(' ')[0] : '';
-  let h=`<h2>${p.n}</h2><div class="sub">${p.d}${rel}</div>${stamp}`;
+  let h=`<h2>${p.n}</h2><div class="sub">${p.d}${rel}</div>`+
+    (p.pr?`<div class="sub" style="font-style:italic">${p.pr}</div>`:'')+stamp;
   if(!dibujados.includes(id))
     h+=`<button class="reroot" data-root="${id}">Ver la ascendencia de ${p.n.split(' ')[0]}</button>`;
   if(p.note) h+=`<div class="note">${p.note}</div>`;
@@ -548,6 +563,16 @@ function show(id){
   if(p.c?.length){ h+='<div class="sec"><h3>Fuentes</h3>';
     p.c.forEach(([c,q2])=>h+=`<div class="cite">${c}${q2?`<br><i>“${q2}”</i>`:''}</div>`);
     if(p.url) h+=`<a class="srcurl" href="${p.url}" target="_blank" rel="noopener">Ver el registro original ↗</a>`;
+    h+='</div>'; }
+  if(p.docs?.length){
+    const nom={tengo:'lo tenemos',online:'está online',pedir:'hay que pedirlo'};
+    h+='<div class="sec"><h3>Documentos</h3><div class="docs">';
+    p.docs.forEach(([tipo,ref,est])=>h+=
+      `<div class="doc"><span class="tipo">${esc(tipo)}</span><span class="ref">${esc(ref)}</span>`+
+      `<span class="est est-${est}">${nom[est]||est}</span></div>`);
+    h+='</div>';
+    if(p.docs.some(x=>x[2]==='tengo'))
+      h+='<p class="privado">Los escaneos de estos documentos no se publican acá: contienen datos personales de gente viva. Están en el árbol privado, al que se entra con cuenta de Google.</p>';
     h+='</div>'; }
   if(p.img?.length){ h+='<div class="sec"><h3>Del registro</h3><div class="shots">';
     p.img.forEach(([src,cap])=>h+=`<figure class="shot" data-full="${src}"><img src="${src}" alt="${cap}" loading="lazy"><figcaption>${cap}</figcaption></figure>`);
