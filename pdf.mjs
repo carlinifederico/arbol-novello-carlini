@@ -107,7 +107,7 @@ const años_ = orden.map(año).filter(Boolean)
 
 const html = `<!doctype html><meta charset="utf-8">
 <title>Ascendencia de ${esc(P[RAIZ].n)}</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@400;500;600&display=swap">
+<style>${readFileSync("fonts/inline.css","utf8")}</style>
 <style>
 @page { size: ${mm(W)}mm ${mm(H)}mm; margin: 0 }
 *{box-sizing:border-box;margin:0;padding:0}

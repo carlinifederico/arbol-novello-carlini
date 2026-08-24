@@ -288,6 +288,10 @@ const PARENTESCO=d=>['','Padres','Abuelos','Bisabuelos','Tatarabuelos',
 const COLS_VIEJO=['','Padres','Abuelos','Bisabuelos','Tatarabuelos',
             '3.os abuelos','4.os abuelos','5.os abuelos','6.os abuelos'];
 
+/* Alturas reales de cada tarjeta, medidas después de pintar. Una estimación
+   nunca alcanza: basta que un nombre largo entre en dos líneas para que los
+   hermanos terminen debajo de la caja. */
+let medido={};
 const world=document.getElementById('world'), wires=document.getElementById('wires'),
       layer=document.getElementById('layer'), heads=document.getElementById('heads'),
       vp=document.getElementById('vp');
@@ -306,8 +310,9 @@ function build(){
      etiquetas suman alto. Hay que medirla en un solo lugar, porque de esa
      altura dependen dos cosas distintas —cuánto espacio reserva el layout y
      dónde arrancan los hermanos— y si se calculan por separado se desfasan. */
-  const altoCaja=id=>{const p=P[id];
+  const estimado=id=>{const p=P[id];
     return CH+(p.pr?18:0)+((p.open||p.dc)?16:0);};
+  const altoCaja=id=>medido[id]??estimado(id);
   const altoDe=id=>altoCaja(id)+(hermanos(id).length?hermanos(id).length*SIB+6:0);
 
   function poner(id,d){
@@ -452,8 +457,22 @@ function build(){
 
   document.getElementById('hint').textContent=
     `${dibujados.length} antepasados de ${P[root].n.split(' ')[0]} · los nombres chiquitos son hermanos`;
+
+  /* Segunda pasada: medir lo que se pintó y, si alguna tarjeta salió más alta
+     que lo estimado, rehacer el layout con las medidas reales. Corre una sola
+     vez —la segunda pasada ya tiene las medidas buenas— y el guard evita
+     cualquier posibilidad de lazo. */
+  if(!remidiendo){
+    let cambio=false;
+    layer.querySelectorAll('.p').forEach(el=>{
+      const h=el.offsetHeight;
+      if(Math.abs((medido[el.dataset.id]??0)-h)>1){ medido[el.dataset.id]=h; cambio=true; }
+    });
+    if(cambio){ remidiendo=true; build(); remidiendo=false; return; }
+  }
   fit();
 }
+let remidiendo=false;
 
 /* ── mover y acercar ── */
 /* ── navegación ────────────────────────────────────────────────
