@@ -14,6 +14,8 @@ const LUGARES = [
    nota:'La familia De Faccio vive acá en 1953. Es donde se casan Luigi y Liliana.'},
   {id:'codroipo', n:'Codroipo',                lat:45.961, lon:12.976, pais:'it', rama:'friuli',
    nota:'De acá es la única Ida Morello indexada en toda la provincia. Sin confirmar.'},
+  {id:'corfu',    n:'Corfú',                   lat:39.624, lon:19.922, pais:'it', rama:'friuli',
+   nota:'Andrea Spiridion Cagnolin nació acá el 26 de diciembre de 1778, cuando la isla era territorio de la República de Venecia. Su segundo nombre es el del patrono de Corfú.'},
   // Sicilia
   {id:'giarre',   n:'Giarre',                  lat:37.727, lon:15.184, pais:'it', rama:'sicilia',
    nota:'Nace Giovanni Fichera en 1869, jornalero del campo.'},
@@ -34,6 +36,8 @@ const LUGARES = [
 
 /* ── Los movimientos, con lo que se sabe y lo que no ── */
 const RUTAS = [
+  {de:'corfu', a:'latisana', año:'1797-1806', quien:'Andrea Spiridion Cagnolin',
+   texto:'Ochocientos kilómetros de mar Adriático. Napoleón disolvió la República de Venecia en 1797 y las Islas Jónicas dejaron de ser venecianas; en enero de 1807 Andrea ya estaba domiciliado en Latisana y se casaba ahí. El acta no dice cuándo llegó ni por qué, sólo que llegó.', firme:false},
   {de:'giarre', a:'acireale', año:'1895', quien:'Giovanni Fichera',
    texto:'Se casa con Agata Castorina el 25 de julio. Ocho kilómetros de costa jónica, al pie del Etna.', firme:true},
   {de:'acireale', a:'genova', año:'~1920', quien:'Antonino Fichera',
@@ -56,10 +60,12 @@ const RUTAS = [
 
 /* ── Conclusiones: lo que se buscó, lo que se encontró, y lo que no está ── */
 const HALLAZGOS = [
-  {tipo:'hallazgo', t:'El árbol llega a 1750',
-   b:'El índice napoleónico de Latisana de 1813 dio la pista —«Cagnolini Elisabetta Catterina, 11 giugno, atto 65»— y el acta entregó dos generaciones de un saque. Andrea Cagnolini figura como «del fu Giuseppe Cagnolini», y su mujer como «Marianna del fu Angelo Donate»: los dos padres nombrados, los dos ya muertos en 1813. Giuseppe Cagnolini, nacido alrededor de 1750, es hoy la persona más antigua de todo el árbol.'},
-  {tipo:'hallazgo', t:'Y no eran campesinos',
-   b:'El acta describe a Andrea con treinta y cuatro años y como POSSIDENTE —propietario— domiciliado en el Borgo dell'Annunziata de Latisana. Marianna, con treinta y uno, también consta como possidente por derecho propio, algo que no era habitual consignar de una mujer. Y Andrea firmó el acta de puño y letra: en ese mismo registro, varias actas vecinas terminan con la fórmula «si dichiararono illetterati».'},
+  {tipo:'hallazgo', t:'La rama Cagnolini no es friulana: es de Corfú',
+   b:'El acta de matrimonio n. 13 de Latisana, del 16 de enero de 1807, dice que Andrea Spiridion Cagnolin nació «li ventisei Decembre mille settecento settantotto nella Città di Corfù». Su segundo nombre lo confirma sin ayuda de nadie: Spiridion es San Spiridione, el patrono de la isla, un nombre que en el Friuli de 1778 no le tocaba a nadie. Y el apellido de su madre, Casanova, es veneciano. La familia no salió del Friuli: llegó al Friuli, desde el último confín de la República de Venecia, en algún momento entre la caída de la Serenísima en 1797 y ese enero de 1807.'},
+  {tipo:'hallazgo', t:'Un acta de matrimonio nombra a los cuatro padres',
+   b:'Por eso valía la pena buscarla. En un solo documento aparecen Giuseppe Cagnolin y Vicenza Casanova —los padres de él— y Angelo Donati y Paolina Bonfin —los de ella—. Tres de los cuatro ya estaban muertos en enero de 1807: el acta llama «q.m», quondam, a todos menos a Vicenza, que desde algún lado mandó el consentimiento escrito el 14 de enero «essendo morto il di lui Padre». Giuseppe Cagnolin, nacido hacia 1745, es hoy la persona más antigua y más lejana del árbol.'},
+  {tipo:'hallazgo', t:'Y no eran campesinos: era boticario',
+   b:'En 1807 Andrea tiene veintiocho años y es SPEZIALE —boticario—; en 1813, en el acta de su hija, ya figura como POSSIDENTE, propietario, domiciliado en el Borgo dell\'Annunziata. Marianna Donati consta como possidente por derecho propio ya antes de casarse, algo que casi no se escribía de una mujer. Él firmó los dos documentos de puño y letra; ella no sabía escribir y firmó por ella el maestro de música del pueblo. En esos mismos registros, acta tras acta termina con «per non saper esso scrivere».'},
   {tipo:'hallazgo', t:'Los Cagnolini sí son de Latisana',
    b:'De 602 resultados, los de coincidencia exacta están todos en Latisana, y permiten reconstruir tres generaciones desde Andrea Cagnolini y Marianna Donati. Aparece además Santa Pinzani, con hijos entre 1867 y 1880: una nieta suya nacida hacia 1900 se habría llamado, por costumbre, Santa Cagnolini.'},
   {tipo:'hallazgo', t:'Sicilia llega hasta ~1810',
