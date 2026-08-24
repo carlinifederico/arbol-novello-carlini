@@ -320,7 +320,12 @@ function build(){
     return vistos;
   })();
   for(let vuelta=0; vuelta<12; vuelta++){
-    const faltan=ids.filter(i=>!puestos.has(i)&&!conectado.has(i));
+    // un hermano ya está dibujado aunque no tenga caja: va chiquito debajo del
+    // suyo. Sin esto, cada hermano abría su propio bloque y los tres terminaban
+    // apilados en la misma coordenada.
+    const ya=new Set(puestos);
+    [...puestos].forEach(i=>hermanos(i).forEach(h=>ya.add(h)));
+    const faltan=ids.filter(i=>!ya.has(i)&&!conectado.has(i));
     if(!faltan.length) break;
     // el más reciente de los que faltan encabeza el bloque
     const cabeza=faltan.reduce((a,b)=>GEN[b]>GEN[a]?b:a);
@@ -328,8 +333,10 @@ function build(){
     if(d<0) break;
     cursor+=34;                       // aire entre el árbol y la rama suelta
     const tope=cursor;
+    const antes=new Set(puestos);
     poner(cabeza,d);
-    ids.forEach(i=>{ if(puestos.has(i)&&Y[i]>=tope-34) sueltos.add(i); });
+    // los sueltos son exactamente los que entraron en esta pasada, ni uno más
+    puestos.forEach(i=>{ if(!antes.has(i)) sueltos.add(i); });
     const r=document.createElement('div'); r.className='rotulo-suelto';
     r.style.left='40px'; r.style.top=(tope-26)+'px';
     r.textContent='rama sin conectar todavía — ningún acta la ata al resto';
