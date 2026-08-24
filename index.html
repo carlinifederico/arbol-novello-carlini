@@ -638,8 +638,14 @@ vp.addEventListener('pointermove',e=>{
   if(gesto.n===1&&dedos.size===1){
     const dx=e.clientX-gesto.x, dy=e.clientY-gesto.y;
     if(Math.hypot(dx,dy)>5) movio=true;
-    const ahora=performance.now(), dt=Math.max(1,ahora-ultimo);
-    vx=(e.clientX-prev.x)/dt*16; vy=(e.clientY-prev.y)/dt*16; ultimo=ahora;
+    /* Velocidad para la inercia. El piso de dt no puede ser 1ms: dos eventos
+       muy juntos dan una velocidad enorme y el árbol sale disparado. Se toma
+       un piso realista de cuadro y además se acota, porque ningún tirón de
+       verdad mueve más de media pantalla por cuadro. */
+    const ahora=performance.now(), dt=Math.max(8,ahora-ultimo), TOPE=55;
+    const nvx=(e.clientX-prev.x)/dt*16, nvy=(e.clientY-prev.y)/dt*16;
+    vx=Math.max(-TOPE,Math.min(TOPE,nvx)); vy=Math.max(-TOPE,Math.min(TOPE,nvy));
+    ultimo=ahora;
     tx=txObj=gesto.tx+dx; ty=tyObj=gesto.ty+dy; pinta2();
   }
   else if(dedos.size>=2){
