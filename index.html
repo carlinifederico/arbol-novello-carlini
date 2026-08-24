@@ -125,6 +125,7 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 .et-negativo{background:var(--sicilia-soft);color:var(--sicilia)}
 .et-muro{background:var(--grid);color:var(--muted)}
 .et-proximo{background:var(--open-soft);color:var(--open)}
+.et-hipotesis{background:transparent;color:var(--open);border:1px dashed var(--open)}
 .nivel{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;font-size:11px;
   color:var(--faint);background:color-mix(in srgb,var(--bg) 82%,transparent);
   padding:4px 9px;border-radius:7px;z-index:20;font-variant-numeric:tabular-nums}
@@ -591,12 +592,12 @@ function pintarRutas(){
 
 function pintarHallazgos(){
   const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  const nombre={hallazgo:'hallazgo',negativo:'negativo verificado',muro:'el muro',proximo:'próximo paso'};
+  const nombre={hallazgo:'hallazgo',negativo:'negativo verificado',hipotesis:'hipótesis',muro:'el muro',proximo:'próximo paso'};
   let h=`<div class="pw"><h2>Lo que se buscó, lo que apareció y lo que no está</h2>
    <p class="intro">Un negativo verificado también es un resultado: dice dónde dejar de buscar.
    Estos salieron de abrir los registros originales y leerlos página por página, no de consultar
    índices de terceros.</p><div class="hall">`;
-  ['hallazgo','negativo','muro','proximo'].forEach(tipo=>
+  ['hallazgo','negativo','hipotesis','muro','proximo'].forEach(tipo=>
     HALLAZGOS.filter(x=>x.tipo===tipo).forEach(x=>{
       h+=`<div class="h"><span class="et et-${tipo}">${nombre[tipo]}</span>
         <h3>${esc(x.t)}</h3><p>${esc(x.b)}</p></div>`;
