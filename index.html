@@ -220,7 +220,7 @@ const unitOfParent={};                 // a qué núcleo pertenece cada progenit
 units.forEach((u,k)=>u.parents.forEach(p=>(unitOfParent[p]=unitOfParent[p]||[]).push(k)));
 
 /* ═══════════ layout ═══════════ */
-const CW=182, CH=60, GAPX=26, GAPY=118, PAIR=14;
+const CW=168, CH=58, GAPX=22, GAPY=112, PAIR=12;
 const yearOf=id=>{const m=P[id].d?.match(/\d{4}/);return m?+m[0]:9999;};
 
 /* Entidad de layout: una pareja ocupa un bloque; los solteros, uno simple. */
@@ -399,8 +399,8 @@ let k=1,tx=0,ty=0;
 const apply=()=>world.style.transform=`translate(${tx}px,${ty}px) scale(${k})`;
 function fit(){
   const r=vp.getBoundingClientRect();
-  k=Math.min(r.width/(W+80),r.height/(H+80),1);
-  tx=(r.width-W*k)/2; ty=24; apply();
+  k=Math.min(r.width/(W+60),r.height/(H+60),1.1);
+  tx=(r.width-W*k)/2; ty=(r.height-H*k)/2; apply();   // centrado en los dos ejes
 }
 vp.addEventListener('wheel',e=>{
   e.preventDefault();
