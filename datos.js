@@ -70,7 +70,7 @@ liliana:{n:"Liliana De Faccio",d:"1929 – 2017",b:"friuli",pa:["gbD","santaC"],
      ["CNE, certificado 23480/2013"]]},
 
 giovanniN:{img:[["registros/latisana-matrimonios-1892-1901-sin-novello.jpg","Matrimonios 1892-1901: el indice salta de Neri a Odorico. Sin Novello."],["registros/latisana-nacimientos-1892-1901-sin-novello.jpg","Nacimientos 1892-1901: salta de Neri a Olivier. Tampoco."]],url:"https://antenati.cultura.gov.it/ark:/12657/an_ua15621743",n:"Giovanni Novello",d:"~1902",b:"friuli",open:1,
-  note:"FRONTERA. Descartado en Latisana revisando página por página los índices decenales, y en toda la provincia de Udine. El apellido se concentra en el Véneto: la familia llegó a Latisana después de 1902.",
+  note:"FRONTERA. Descartado en Latisana revisando página por página los índices decenales, y en toda la provincia de Udine. La pista del Véneto se confirmó en el lugar correcto: hay familias Novello en Portogruaro, el comune que está cruzando el Tagliamento a cinco kilómetros de Latisana. Pero ningún Giovanni de ~1902 figura ahí tampoco, y el candidato más tentador —un Giovanni Giuseppe nacido en Venezia el 4 de septiembre de 1902— queda eliminado por su propia acta: murió en 1909, de siete años. Y conviene dudar de la edad: los 52 años salen de una declaración de 1954, y las edades declaradas son notoriamente aproximadas.",
   f:[["Nacimiento","~1902","Derivado: declarado de 52 años como testigo en agosto de 1954."],
      ["Oficio","Zapatero"],["Nacionalidad","Italiana"],["Residencia","Bella Vista, 1954"]],
   c:[["Bella Vista 1954, Nacimientos, acta n. 166","Juan Novello, 52 años, italiano, zapatero"]]},
