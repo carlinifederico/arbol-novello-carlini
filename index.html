@@ -618,14 +618,20 @@ vp.addEventListener('pointerdown',e=>{
   if(inercia){cancelAnimationFrame(inercia); inercia=null;}
   dedos.set(e.pointerId,{x:e.clientX,y:e.clientY});
   movio=false; vx=vy=0; ultimo=performance.now();
-  vp.setPointerCapture(e.pointerId); vp.classList.add('drag');
-  arranca();
+  arranca();                                    // primero el estado del gesto
+  vp.classList.add('drag');
+  /* La captura es una comodidad, no un requisito: sirve para que el dedo
+     pueda salirse del lienzo sin cortar el arrastre. Pero lanza si el puntero
+     ya no existe, y si eso pasa antes de armar el gesto el arrastre no
+     arranca nunca. Va última y entre paréntesis. */
+  try{ vp.setPointerCapture(e.pointerId); }catch(_){}
 });
 
 vp.addEventListener('pointermove',e=>{
   if(!dedos.has(e.pointerId)) return;
   const prev=dedos.get(e.pointerId);
   dedos.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(!gesto) arranca();                         // por si el pointerdown se perdió
   if(!gesto) return;
   const r=vp.getBoundingClientRect();
 
