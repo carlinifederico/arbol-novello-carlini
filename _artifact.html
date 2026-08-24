@@ -693,8 +693,13 @@ function build(){
      columna que les toca por generación, debajo del árbol principal y con su
      propio rótulo, para que se vea que están y que todavía no están atadas. */
   const sueltos=new Set();
-  for(let vuelta=0; vuelta<6; vuelta++){
-    const faltan=ids.filter(i=>!puestos.has(i));
+  // un hermano ya está en el dibujo aunque no tenga caja propia: va chiquito
+  // debajo de su hermano. No cuenta como faltante.
+  const cubierto=()=>{const s=new Set(puestos);
+    [...puestos].forEach(i=>hermanos(i).forEach(h=>s.add(h))); return s;};
+  for(let vuelta=0; vuelta<12; vuelta++){
+    const ya=cubierto();
+    const faltan=ids.filter(i=>!ya.has(i));
     if(!faltan.length) break;
     // el más reciente de los que faltan encabeza el bloque
     const cabeza=faltan.reduce((a,b)=>GEN[b]>GEN[a]?b:a);
