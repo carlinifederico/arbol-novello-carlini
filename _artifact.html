@@ -693,13 +693,21 @@ function build(){
      columna que les toca por generación, debajo del árbol principal y con su
      propio rótulo, para que se vea que están y que todavía no están atadas. */
   const sueltos=new Set();
-  // un hermano ya está en el dibujo aunque no tenga caja propia: va chiquito
-  // debajo de su hermano. No cuenta como faltante.
-  const cubierto=()=>{const s=new Set(puestos);
-    [...puestos].forEach(i=>hermanos(i).forEach(h=>s.add(h))); return s;};
+  /* Ojo con qué cuenta como "suelto". Sólo lo está quien no tiene NINGÚN camino
+     hasta la raíz, ni siquiera bajando. Bernardo, sus hijos o los hermanos sí
+     están conectados: lo que pasa es que este gráfico mira hacia atrás y ellos
+     quedan hacia adelante. Meterlos en este pase los volvía a dibujar encima de
+     alguien ya puesto, y encima con un rótulo que decía lo contrario de la
+     verdad. Ellos se ven en la ficha; acá va sólo lo que de veras está suelto. */
+  const conectado=(()=>{
+    const ady=new Map(ids.map(k=>[k,new Set()]));
+    ids.forEach(k=>pa(k).forEach(p=>{ady.get(k).add(p); ady.get(p).add(k);}));
+    const vistos=new Set([root]), cola=[root];
+    while(cola.length) for(const n of ady.get(cola.pop())||[]) if(!vistos.has(n)){vistos.add(n); cola.push(n);}
+    return vistos;
+  })();
   for(let vuelta=0; vuelta<12; vuelta++){
-    const ya=cubierto();
-    const faltan=ids.filter(i=>!ya.has(i));
+    const faltan=ids.filter(i=>!puestos.has(i)&&!conectado.has(i));
     if(!faltan.length) break;
     // el más reciente de los que faltan encabeza el bloque
     const cabeza=faltan.reduce((a,b)=>GEN[b]>GEN[a]?b:a);
