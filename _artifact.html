@@ -1,0 +1,606 @@
+<title>Árbol Novello Carlini</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Source+Sans+3:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+
+<style>
+:root{
+  --paper:#f3f2ef; --card:#fff; --ink:#1a1e1c; --muted:#6d7572; --faint:#9aa19e;
+  --line:#dcdbd5; --soft:#e9e8e3;
+  --friuli:#2f6b5e; --friuli-bg:#e6efec;
+  --sicilia:#8c3552; --sicilia-bg:#f4e7eb;
+  --arg:#3c5a72;  --arg-bg:#e6ecf1;
+  --open:#8a5a1b; --open-bg:#f6eddd;
+  --shadow:0 1px 2px rgba(26,30,28,.06),0 10px 28px -20px rgba(26,30,28,.4);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#131715; --card:#1b201e; --ink:#e9eae7; --muted:#98a09c; --faint:#6d7572;
+  --line:#2a312e; --soft:#212724;
+  --friuli:#7cc0ac; --friuli-bg:#1a2a26;
+  --sicilia:#e08fa6; --sicilia-bg:#2b1b21;
+  --arg:#8fb3cf;  --arg-bg:#1a232a;
+  --open:#dda75f; --open-bg:#2a2318;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -20px rgba(0,0,0,.9);
+}}
+:root[data-theme="dark"]{
+  --paper:#131715; --card:#1b201e; --ink:#e9eae7; --muted:#98a09c; --faint:#6d7572;
+  --line:#2a312e; --soft:#212724;
+  --friuli:#7cc0ac; --friuli-bg:#1a2a26;
+  --sicilia:#e08fa6; --sicilia-bg:#2b1b21;
+  --arg:#8fb3cf;  --arg-bg:#1a232a;
+  --open:#dda75f; --open-bg:#2a2318;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -20px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Source Sans 3",system-ui,sans-serif;font-size:16px;line-height:1.55;
+  -webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:Newsreader,Georgia,serif;font-weight:500;margin:0;text-wrap:balance}
+.wrap{max-width:1500px;margin:0 auto;padding:0 20px}
+
+header{border-bottom:1px solid var(--line);padding:34px 0 22px}
+.kicker{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.08;letter-spacing:-.015em}
+.lede{max-width:62ch;margin-top:11px;color:var(--muted);font-size:15.5px}
+
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 0 12px}
+.k{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);
+  border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--card)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.sw{width:16px;height:10px;border-radius:3px;border:1px solid var(--muted);flex:none}
+.sw.d{border-style:dashed}
+.sw.h{border-style:dashed;border-color:var(--open);background:var(--open-bg)}
+input[type=search]{font:inherit;font-size:13.5px;padding:5px 11px;border:1px solid var(--line);
+  border-radius:999px;background:var(--card);color:inherit;min-width:190px}
+input[type=search]:focus-visible{outline:2px solid var(--arg);outline-offset:1px}
+
+/* --- el árbol y la ficha, lado a lado: la ficha NO tapa el dibujo --- */
+.split{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+.split.open{grid-template-columns:minmax(0,1fr) 370px}
+@media (max-width:1080px){ .split.open{grid-template-columns:minmax(0,1fr)} }
+
+.stage{position:relative;overflow:auto;border:1px solid var(--line);border-radius:14px;
+  background:var(--card);box-shadow:var(--shadow);max-height:78vh}
+.canvas{position:relative}
+svg.links{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.axis{position:sticky;top:0;display:flex;background:var(--card);border-bottom:1px solid var(--soft);z-index:5}
+.axis div{flex:none;padding:8px 12px;border-right:1px solid var(--soft)}
+.axis b{display:block;font-family:Newsreader,serif;font-size:13.5px;font-weight:500}
+.axis span{font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+
+.node{position:absolute;background:var(--card);border:1px solid var(--line);
+  border-left-width:3px;border-radius:9px;padding:7px 10px;cursor:pointer;
+  font:inherit;text-align:left;color:inherit;transition:opacity .15s,box-shadow .12s}
+.node:hover{box-shadow:var(--shadow)}
+.node:focus-visible{outline:2px solid var(--arg);outline-offset:2px}
+.node.on{box-shadow:0 0 0 2px var(--ink)}
+.node.dim{opacity:.22}
+.node[data-b=friuli]{border-left-color:var(--friuli)}
+.node[data-b=sicilia]{border-left-color:var(--sicilia)}
+.node[data-b=arg]{border-left-color:var(--arg)}
+.node.test{border-style:dashed;border-left-style:solid}
+.node.hyp{border-style:dashed;border-left-style:solid;border-color:var(--open);background:var(--open-bg)}
+.node.op{border-style:dashed;border-left-style:solid;background:var(--open-bg)}
+.node .n{display:block;font-size:13px;font-weight:600;line-height:1.22}
+.node .d{display:block;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:1px}
+.node .b{display:inline-block;margin-top:3px;font-size:9px;letter-spacing:.06em;
+  text-transform:uppercase;padding:1px 5px;border-radius:3px}
+.b.open{background:var(--open-bg);color:var(--open);border:1px solid var(--open)}
+.b.dc{background:var(--friuli-bg);color:var(--friuli)}
+.b.tt{color:var(--faint);border:1px dashed var(--line)}
+
+.panel{border:1px solid var(--line);border-radius:14px;background:var(--card);
+  box-shadow:var(--shadow);padding:20px 22px 26px;position:sticky;top:14px;
+  max-height:78vh;overflow-y:auto}
+.panel h2{font-size:21px;line-height:1.15;padding-right:34px}
+.panel .sub{color:var(--muted);font-size:13px;margin-top:2px;font-variant-numeric:tabular-nums}
+.close{position:absolute;top:13px;right:15px;appearance:none;border:1px solid var(--line);
+  background:var(--card);border-radius:8px;width:28px;height:28px;cursor:pointer;color:var(--muted)}
+.src-tag{display:inline-block;margin-top:9px;font-size:10px;letter-spacing:.07em;
+  text-transform:uppercase;padding:2px 7px;border-radius:3px}
+.src-doc{background:var(--friuli-bg);color:var(--friuli)}
+.src-test{background:var(--soft);color:var(--muted)}
+.src-hyp{background:var(--open-bg);color:var(--open)}
+.note{margin-top:12px;font-size:13.5px;line-height:1.55;color:var(--muted);
+  border-left:2px solid var(--line);padding-left:11px}
+.grp{margin-top:18px}
+.grp h3{font-family:"Source Sans 3",sans-serif;font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:7px}
+.row{padding:7px 0;border-top:1px solid var(--soft)}
+.row:first-of-type{border-top:0}
+.row .kk{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.row .vv{font-size:14px;margin-top:1px}
+.ok{display:inline-block;font-size:9px;letter-spacing:.06em;text-transform:uppercase;
+  background:var(--friuli-bg);color:var(--friuli);padding:1px 5px;border-radius:3px;margin-left:5px}
+.why{margin-top:6px;font-size:12.5px;line-height:1.5;color:var(--muted);
+  background:var(--paper);border-radius:7px;padding:7px 9px}
+.cite{font-family:"JetBrains Mono",monospace;font-size:10.5px;line-height:1.5;color:var(--muted);
+  margin-top:5px;padding-left:9px;border-left:1px solid var(--line);word-break:break-word}
+.cite i{font-family:"Source Sans 3",sans-serif;font-size:11.5px}
+.rel{display:flex;flex-wrap:wrap;gap:5px}
+.rel button{appearance:none;border:1px solid var(--line);background:var(--card);border-radius:8px;
+  padding:3px 8px;font:inherit;font-size:12px;cursor:pointer;color:inherit}
+.rel button:hover{background:var(--soft)}
+
+footer{border-top:1px solid var(--line);margin-top:34px;padding:26px 0 60px}
+.cols{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));margin-top:15px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:15px 16px}
+.card h3{font-size:15.5px;line-height:1.3;margin-bottom:6px}
+.card p{margin:0;font-size:13px;line-height:1.55;color:var(--muted)}
+.pill{display:inline-block;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 7px;border-radius:3px;margin-bottom:7px;background:var(--open-bg);color:var(--open)}
+.hint{font-size:12.5px;color:var(--faint);margin-top:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header><div class="wrap">
+  <div class="kicker">Giarre · Acireale · Latisana · San Giorgio di Nogaro · Bella Vista · Mar del Plata</div>
+  <h1>Árbol Novello · Carlini</h1>
+  <p class="lede">La familia entera en un solo dibujo, de los tatarabuelos sicilianos de ~1810
+    hasta Antonio, Felipe y Facundo. Cada persona lleva la fuente de lo que se sabe de ella:
+    un acta, el testimonio de la familia, o una hipótesis marcada como tal.</p>
+</div></header>
+
+<div class="wrap">
+  <div class="bar">
+    <span class="k"><i class="dot" style="background:var(--sicilia)"></i>Sicilia</span>
+    <span class="k"><i class="dot" style="background:var(--friuli)"></i>Friuli</span>
+    <span class="k"><i class="dot" style="background:var(--arg)"></i>Argentina</span>
+    <span class="k"><i class="sw"></i>documentado</span>
+    <span class="k"><i class="sw d"></i>testimonio familiar</span>
+    <span class="k"><i class="sw h"></i>hipótesis o frontera</span>
+    <input type="search" id="q" placeholder="Buscar una persona…" aria-label="Buscar">
+  </div>
+
+  <div class="split" id="split">
+    <div class="stage" id="stage">
+      <div class="axis" id="axis"></div>
+      <div class="canvas" id="canvas"><svg class="links" id="links"></svg></div>
+    </div>
+    <aside class="panel" id="panel" hidden>
+      <button class="close" id="close" aria-label="Cerrar">×</button>
+      <div id="panelIn"></div>
+    </aside>
+  </div>
+  <p class="hint">
+    Las columnas son generaciones. Cada línea va de una persona a su padre o a su madre.
+    Al elegir a alguien se resalta su linaje completo, hacia arriba y hacia abajo.
+  </p>
+
+  <footer>
+    <h2>Dónde se corta, y por qué</h2>
+    <div class="cols" id="qs"></div>
+  </footer>
+</div>
+
+<script>/** Las personas del árbol. Cada una con su fuente: acta, testimonio o hipótesis. */
+const P={
+antonio:{n:"Antonio Carlini López",d:"2017",b:"arg",pa:["federico","maia"],
+  f:[["Nacimiento","2017, Ciudad de Buenos Aires"],["Ciudadanía","Italiana, declarada por sentencia"]],
+  c:[["ACTA-2017-18256686-DGRC, Tomo 3 n. 89/2017"],["Sentenza Tribunale di Trieste, R.G. 7781/2024"]]},
+federico:{n:"Federico Carlini",d:"1989",b:"arg",pa:["anibal","patricia"],
+  note:"Declarado ciudadano italiano por el Tribunale di Trieste el 30 de abril de 2026, tras fracasar la vía consular entre 2022 y 2024.",
+  f:[["Nacimiento","1989, Bella Vista"],["Ciudadanía","Italiana, declarada por sentencia"]],
+  sib:["francisco","nicolas","bernardo"],
+  c:[["Folio 85, n. 337, Libro de Nacimientos 1989, Oficina de Bella Vista"],
+     ["Sentenza Tribunale di Trieste, R.G. 7781/2024","Accerta e dichiara che i ricorrenti sono cittadini italiani"]]},
+maia:{n:"Maia López",d:"1987",b:"arg",pa:["josemaria","lidia"],
+  note:"Su lugar de nacimiento está en conflicto entre las fuentes familiares: París en una, Argentina en otra.",
+  f:[["Nacimiento","1987"]],c:[["Acta de nacimiento de Antonio, 2017"]]},
+josemaria:{n:"José María López",d:"?",b:"arg"},
+lidia:{n:"Lidia Makaroff",d:"?",b:"arg",
+  note:"La transliteración con -off es francesa o alemana, no inglesa: sugiere llegada vía Europa occidental, no la ola migratoria pre-1914."},
+anibal:{n:"Aníbal José Carlini",d:"1952",b:"arg",pa:["jfc","haydee"],
+  f:[["Nacimiento","28 de octubre de 1952, Mar del Plata"],["Oficio","Comerciante (1978)"],
+     ["Estado civil","Viudo de Patricia Novello desde 2003"]],
+  c:[["Bella Vista 1978, Matrimonios, acta n. 219"],["Escritura n. 196, 2009"]]},
+patricia:{n:"Patricia Novello",d:"1954 – 2003",b:"friuli",pa:["luigi","liliana"],
+  f:[["Nacimiento","19 de agosto de 1954, Bella Vista","Su acta de matrimonio dice 19 de septiembre: error de transcripción.",1],
+     ["Oficio","Empleada (1978) · archivista (2003)"],["Defunción","24 de mayo de 2003, San Miguel"]],
+  sib:["carmen","luisa"],
+  c:[["Bella Vista 1954, Nacimientos, acta n. 166"],["Acta de defunción n. 251 I A, 2003"]]},
+francisco:{n:"Francisco Carlini",d:"1982",b:"arg",pa:["anibal","patricia"],
+  note:"Mellizo de Nicolás. No firma las aceptaciones de venta de 2025 que sí firman sus tres hermanos.",
+  f:[["Nacimiento","1982"],["Mellizo","Nacido el mismo día que Nicolás"]]},
+nicolas:{n:"Nicolás Carlini",d:"1982",b:"arg",pa:["anibal","patricia"],
+  note:"Mellizo de Francisco.",
+  f:[["Nacimiento","1982"],["Mellizo","Nacido el mismo día que Francisco"]]},
+bernardo:{n:"Bernardo Carlini",d:"1984",b:"arg",pa:["anibal","patricia"],
+  f:[["Nacimiento","1984"]]},
+clara:{t:1,n:"Clara Canale",d:"—",b:"arg",
+  note:"Madre de Felipe y Facundo."},
+felipe:{t:1,n:"Felipe Carlini",d:"—",b:"arg",pa:["bernardo","clara"]},
+facundo:{t:1,n:"Facundo Carlini",d:"—",b:"arg",pa:["bernardo","clara"]},
+carmen:{pa:["luigi","liliana"],t:1,n:"Carmen Novello",d:"?",b:"friuli",
+  note:"Probable hermana de Patricia. Heredera testamentaria de Simón Pedro Bersano, expediente 93450/2019."},
+luisa:{pa:["luigi","liliana"],t:1,n:"Luisa Marina Novello",d:"?",b:"friuli",
+  note:"Probable hermana de Patricia. Declarante en el acta de defunción de su padre, en 2021."},
+
+jfc:{n:"José Francisco Calixto Carlini",d:"?",b:"arg",open:1,
+  note:"FRONTERA, y la incógnita más resistente. Un investigador de la familia pasó tres meses buscándolo en el Archivio di Stato di Catania, sin resultado. CARLINI no es apellido siciliano: se concentra en Marche, Umbría, Lazio, Emilia y Toscana. Fue buscado en la provincia equivocada.",
+  c:[["Bella Vista 1978, Matrimonios, acta n. 219"]]},
+haydee:{n:"Haydée Fichera",d:"~1920s",b:"sicilia",pa:["antoninoF","carmelaV"],
+  note:"Probablemente bautizada AGATA, por su abuela. El testimonio familiar dice que «Agata terminó siendo Haydée pasando por otros nombres». Si es así, hay que pedir la partida a nombre de Agata.",
+  f:[["Nombre de nacimiento","Agata Fichera","Hipótesis apoyada en la costumbre siciliana de nombrar a la nieta como la abuela."]],
+  c:[["Testimonio de Juan Lucero, 23-ago-2026"]]},
+
+luigi:{n:"Luigi (Luis) Novello",d:"1929 – 2021",b:"friuli",pa:["giovanniN","idaM"],dc:1,
+  note:"El dante causa de la ciudadanía italiana. Nunca se naturalizó argentino, y eso es exactamente lo que mantiene intacta la línea iure sanguinis hasta Federico y Antonio.",
+  f:[["Nacimiento","28 de julio de 1929, 20:45 — Latisana (UD)","Aceptada sobre el 31 de julio de la sentencia de Trieste: cinco actos concordantes contra una transcripción judicial.",1],
+     ["Bautismo","16 de octubre de 1929"],["Oficio","Meccanico (1953) · jubilado (2021)"],
+     ["Servicio militar","Classe 1929, Comune di Latisana"],
+     ["Residencia","Las Heras y Lafinur, Bella Vista — 1953"],
+     ["Nacionalidad","Italiana, nunca naturalizado argentino"],
+     ["Defunción","7 de febrero de 2021, Bella Vista"]],
+  c:[["Latisana 1929, Nati, Parte I, n. 130","nato il 28 luglio 1929 alle ore 20:45"],
+     ["Latisana 1948, Lista di leva","Novello Luigi, di Giovanni e Morello Ida"],
+     ["CNE, certificado 23481/2013"]]},
+liliana:{n:"Liliana De Faccio",d:"1929 – 2017",b:"friuli",pa:["gbD","santaC"],
+  f:[["Nacimiento","4 de octubre de 1929, 23:00 — Latisana (UD)","La notificación parroquial dice 5 de octubre. Manda el acta civil.",1],
+     ["Bautismo","28 de octubre de 1929"],["Oficio","Casalinga (1953) · jubilada (2017)"],
+     ["Residencia","San Giorgio di Nogaro (UD) — 1953"],
+     ["Nacionalidad","Italiana, nunca naturalizada argentina"],
+     ["Defunción","11 de junio de 2017, Bella Vista, a los 87 años"]],
+  c:[["Latisana 1929, Nati, Parte I, n. 184","nata il 4 ottobre 1929 alle ore 23:00"],
+     ["CNE, certificado 23480/2013"]]},
+
+giovanniN:{n:"Giovanni Novello",d:"~1902",b:"friuli",open:1,
+  note:"FRONTERA. Descartado en Latisana revisando página por página los índices decenales, y en toda la provincia de Udine. El apellido se concentra en el Véneto: la familia llegó a Latisana después de 1902.",
+  f:[["Nacimiento","~1902","Derivado: declarado de 52 años como testigo en agosto de 1954."],
+     ["Oficio","Zapatero"],["Nacionalidad","Italiana"],["Residencia","Bella Vista, 1954"]],
+  c:[["Bella Vista 1954, Nacimientos, acta n. 166","Juan Novello, 52 años, italiano, zapatero"]]},
+idaM:{n:"Ida Morello",d:"?",b:"friuli",open:1,pa:["ferdinandoM","mariaZ"],hyp:1,
+  note:"FRONTERA. Candidata única sin confirmar: la Ida Morello nacida el 23 de septiembre de 1895 en Codroipo, hija de Ferdinando Morello y Maria Zanin — es la única Ida Morello indexada en toda la provincia de Udine. En contra: sería siete años mayor que Giovanni. Ojo — en Latisana conviven MORELLO y MURELLO como apellidos distintos: no colapsarlos.",
+  f:[["Los Morello sí son de Latisana","Ocho matrimonios Morello en el decenio 1892-1901: Anna (1892, acta 2) · Bernardo (1901, 1) · Carolina (1893, 27) · Francesco (1900, 9) · Giovanni (1896, 21) · Luigi (1897, 26) · Maria (1899, 26) · Teresa (1895, 21).","Entre esos ocho puede estar el matrimonio de los padres de Ida. Hipótesis de trabajo: Giovanni Novello llegó de afuera y se casó con una Morello local."]],
+  c:[["Latisana 1948, Lista di leva","di Giovanni e Morello Ida"],
+     ["Latisana 1892-1901, Matrimoni, indici decennali, segn. 6520"]]},
+gbD:{n:"Giovanni Battista De Faccio",d:"?",b:"friuli",open:1,
+  note:"FRONTERA, y la friulana más resistente. Los 514 De Faccio indexados en la provincia de Udine se concentran en Udine ciudad y en Premariacco/Ipplis — no en la Bassa Friulana, que es donde vivía esta familia.",
+  f:[["Variantes del nombre","Giobatta · Gio Batta · Juan Bautista"],
+     ["Núcleos De Faccio hallados en Udine","Pietro De Faccio × Teresa del Torre · Angelo De Faccio × Domenica Molinari (Ipplis) · Luigi De Faccio × Amabile Morandini · Giuseppe De Faccio × Giuseppina Cattarossi","Ninguno pudo vincularse a Giovanni Battista. Son homónimos de otra zona de la provincia."],
+     ["Por qué es difícil","San Giorgio di Nogaro perdió casi todo su archivo comunal anterior a 1918 en la invasión de Caporetto, y no tiene índices decenales de nacimientos en Antenati en ningún decenio.","Sobrevivieron las segundas copias del Tribunale (325 registros) y los libros parroquiales, que no eran del comune. Hay que rutear por el Archivio di Stato y la parroquia, nunca por el comune."],
+     ["Trampa técnica","En los índices, «DE FACCIO» puede estar alfabetizado bajo D o bajo F. Hay que revisar las dos."]],
+  c:[["San Giorgio di Nogaro 1953, Matrimoni, Parte II Serie A, n. 9","figlia di Giovanni Battista e Cagnolini Santa"],
+     ["FamilySearch, Udine 1806-1815 y 1871-1911: 514 registros De Faccio revisados"]]},
+santaC:{n:"Santa Cagnolini",d:"?",b:"friuli",open:1,pa:["giuseppeEM"],hyp:1,
+  note:"FRONTERA, pero la más cerca de caer. Los Cagnolini son de Latisana y hay tres generaciones reconstruidas. La hipótesis onomástica es fuerte: por la costumbre italiana, una nieta de Santa Pinzani nacida hacia 1900 se habría llamado Santa Cagnolini. El padre más probable es Giuseppe Enrico Marzio, que tendría 20 años en 1900.",
+  f:[["Variante del nombre","Santina — y «Cagnolin» en el acta de Patricia"],
+     ["Qué falta","Su acta de nacimiento, ~1895-1905, en el Comune di Latisana","Cae después de 1900, donde termina Antenati: no está online, hay que pedirla."]],
+  c:[["San Giorgio di Nogaro 1953, Matrimoni, Parte II Serie A, n. 9","figlia di Giovanni Battista e Cagnolini Santa"]]},
+
+antoninoF:{n:"Antonino Fichera",d:"1898",b:"sicilia",pa:["giovanniF","agataC"],
+  note:"Lleva el nombre de su abuelo materno, Antonino Castorina — la regla siciliana del segundo varón.",
+  f:[["Nacimiento","1898, Acireale"],["Confirmación","14 de febrero de 1908, Diócesis de Acireale"],
+     ["Emigración","Embarcó solo en Génova; su mujer lo siguió dos años después. Buque recordado como «Francia».","El buque no pudo confirmarse en la bibliografía de la ruta: sirve para confirmar un candidato, nunca para descartar."],
+     ["Oficio","Construcción; dirigente gremial en Mar del Plata"],
+     ["Muerte","Accidente de obra: le cayó un ascensor. La familia sostenía que lo habían matado."]],
+  sib:["rosarioH","antoninaF","mariaF","giuseppe2"],
+  c:[["Diocesi di Acireale, confirmación 14-feb-1908"],["Testimonio de Juan Lucero, 23-ago-2026"]]},
+carmelaV:{t:1,n:"Carmela Vaccaro",d:"?",b:"sicilia",open:1,
+  note:"Hipótesis. El testimonio familiar menciona el nombre como relevante pero sin ubicar de quién era esposa. Descrita como hija de una familia tradicional de Acireale.",
+  c:[["Testimonio de Juan Lucero, 23-ago-2026"]]},
+giovanniF:{n:"Giovanni Fichera",d:"1869",b:"sicilia",pa:["rosarioF","mariaB"],
+  note:"El testimonio oral decía Giarre, jornalero del campo, casado con una Castorina de Acireale. El acta lo confirma palabra por palabra.",
+  f:[["Nacimiento","1869, Giarre (Catania)","Derivado de la edad declarada — 26 años — en julio de 1895."],
+     ["Oficio","Bracciante — jornalero del campo"],["Matrimonio","25 de julio de 1895, Acireale"]],
+  c:[["Acireale 1895, Matrimoni, atto n. 99","Giovanni Fichera, anni 26, nato a Giarre, bracciante"]]},
+agataC:{n:"Agata Castorina",d:"~1873",b:"sicilia",pa:["antoninoC","veneraP"],
+  note:"Su nieta Haydée probablemente fue bautizada Agata en su honor.",
+  f:[["Nacimiento","~1873, Acireale","Derivado de la edad declarada — 22 años — en julio de 1895."]],
+  c:[["Acireale 1895, Matrimoni, atto n. 99","Agata Castorina, anni 22, di Acireale"]]},
+rosarioF:{n:"Rosario Fichera",d:"~1840",b:"sicilia",
+  note:"La generación más antigua documentada de toda la familia. Nombrado en el acta de matrimonio de su hijo Giovanni, en 1895.",
+  f:[["Residencia","Giarre (Catania)"]],c:[["Acireale 1895, Matrimoni, atto n. 99"]]},
+mariaB:{n:"Maria Bonaventura",d:"~1845",b:"sicilia",c:[["Acireale 1895, Matrimoni, atto n. 99"]]},
+antoninoC:{n:"Antonino Castorina",d:"1837 – 1905",b:"sicilia",pa:["salvatoreC","angelaM"],
+  note:"CASTORINA es un apellido muy característico de Acireale. Su nieto Antonino Fichera lleva su nombre, por la regla siciliana del segundo varón.",
+  f:[["Nacimiento","1837, Acireale"],
+     ["Matrimonio","3 de junio de 1860, con Venera Privitera"],
+     ["Defunción","22 de enero de 1905, Acireale"]],
+  c:[["Acireale 1895, Matrimoni, atto n. 99"],
+     ["Catania, Stato civile, defunción 22-ene-1905","Antonino Castorina, nato 1837 Acireale, di Salvatore e Angela Motta"],
+     ["Diocesi di Acireale, matrimonio 3-giu-1860","figlio di Salvatore Castorina e Angilberga Motto"]]},
+veneraP:{n:"Venera Privitera",d:"~1840",b:"sicilia",pa:["francescoP","agataL"],
+  f:[["Matrimonio","3 de junio de 1860, Acireale"]],
+  c:[["Acireale 1895, Matrimoni, atto n. 99"],
+     ["Diocesi di Acireale, matrimonio 3-giu-1860","figlia di Francesco Privitera e Agata Leonardi"]]},
+francescoP:{n:"Francesco Privitera",d:"~1815",b:"sicilia",
+  note:"Hallado en el registro parroquial del matrimonio de su hija Venera, en 1860. Su nieto Francesco Castorina lleva su nombre, por la regla del segundo varón.",
+  c:[["Diocesi di Acireale, matrimonio 3-giu-1860"]]},
+agataL:{n:"Agata Leonardi",d:"~1818",b:"sicilia",
+  note:"Hallada en el mismo registro de 1860. Su bisnieta Agata Castorina y su tataranieta Haydée (probablemente Agata) llevan su nombre: el nombre viaja cuatro generaciones seguidas por la rama femenina.",
+  c:[["Diocesi di Acireale, matrimonio 3-giu-1860"]]},
+
+/* ---- Hermanos de Agata Castorina ---- */
+francescoCast:{n:"Francesco Castorina",d:"?",b:"sicilia",pa:["antoninoC","veneraP"],
+  note:"Hermano de Agata. Su nombre viene del abuelo materno, Francesco Privitera.",
+  c:[["Catania, Stato civile 1866-1929"]]},
+salvatoreCast:{n:"Salvatore Castorina",d:"?",b:"sicilia",pa:["antoninoC","veneraP"],
+  note:"Hermano de Agata. Su nombre viene del abuelo paterno, Salvatore Castorina. Que los dos hermanos lleven exactamente los nombres que la regla siciliana predice es una confirmación cruzada de toda la reconstrucción.",
+  c:[["Catania, Stato civile 1866-1929"]]},
+salvatoreC:{n:"Salvatore Castorina",d:"~1810",b:"sicilia",
+  note:"Generación nueva, hallada por dos fuentes independientes: el acta de defunción civil de su hijo Antonino (1905) y el registro parroquial de su matrimonio (1860).",
+  c:[["Catania, Stato civile, defunción de Antonino Castorina, 22-ene-1905"],
+     ["Diocesi di Acireale, matrimonio de Antonino Castorina, 3-giu-1860"]]},
+angelaM:{n:"Angela Motta",d:"~1812",b:"sicilia",
+  note:"El registro parroquial la anota como «Angilberga Motto» y el civil como «Angela Motta»: la misma persona, dos grafías. Por su generación es la candidata natural a ser la antepasada de ~1812 a la que llegó Juan Lucero por su cuenta — sería una confirmación cruzada, pero está SIN VERIFICAR.",
+  c:[["Catania, Stato civile, defunción de Antonino Castorina, 22-ene-1905","di Salvatore e Angela Motta"],
+     ["Diocesi di Acireale, matrimonio 3-giu-1860","Angilberga Motto"]]},
+
+/* ---- Hermanos de Giovanni Fichera ---- */
+nuntiaF:{n:"Nuntia Fichera",d:"?",b:"sicilia",pa:["rosarioF","mariaB"],
+  note:"Hermana de Giovanni. Aparece como novia en los registros parroquiales de la Diócesis de Acireale.",
+  c:[["Diocesi di Acireale, Catholic Church Records 1560-1950"]]},
+salvatoreF:{n:"Salvatore Fichera",d:"?",b:"sicilia",pa:["rosarioF","mariaB"],
+  note:"Hermano de Giovanni. Aparece como novio en los registros parroquiales de la Diócesis de Acireale. Su nombre sugiere que la familia Fichera y la Castorina ya se cruzaban antes de 1895.",
+  c:[["Diocesi di Acireale, Catholic Church Records 1560-1950"]]},
+rosarioH:{pa:["giovanniF","agataC"],t:1,n:"Rosario Fichera",d:"~1896",b:"sicilia",
+  note:"No documentado. La regla siciliana manda que el primer varón lleve el nombre del abuelo paterno — Rosario. El testimonio lo recordaba como «Romario», el hermano mayor.",
+  f:[["Dato familiar","Dueño de la casa donde se fundó el Club River Plate de Mar del Plata"]],
+  c:[["Testimonio de Juan Lucero, 23-ago-2026"]]},
+antoninaF:{pa:["giovanniF","agataC"],n:"Antonina Fichera",d:"1898",b:"sicilia",
+  note:"Bautizada el 15 de octubre de 1898, el mismo año que Antonino. O son mellizos, o el índice leyó mal el latín «Antoninus»."},
+mariaF:{pa:["giovanniF","agataC"],n:"Maria Fichera",d:"1900",b:"sicilia"},
+giuseppe2:{pa:["giovanniF","agataC"],n:"Giuseppe Fichera",d:"1904",b:"sicilia",
+  note:"Un hermano anterior con el mismo nombre murió antes de cumplir el año, en 1903. Reutilizar el nombre era práctica habitual."},
+
+/* ---- Hermanos de Liliana: por testimonio familiar, sin documento todavía ---- */
+ivonne:{t:1,n:"Ivonne De Faccio",d:"~1925-45",b:"friuli",pa:["gbD","santaC"],
+  note:"Hermana de Liliana. Sólo por testimonio familiar: no hay documento. «Ivonne» es la forma francesa de Yvonne — llamativa en el Friuli de entreguerras, porque el fascismo desalentaba los nombres extranjeros. Puede indicar un nacimiento posterior a 1945.",
+  c:[["Testimonio familiar de Federico Carlini, 23-ago-2026"]]},
+vilma:{t:1,n:"Vilma De Faccio",d:"~1925-45",b:"friuli",pa:["gbD","santaC"],
+  note:"Hermana de Liliana. Sólo por testimonio familiar. «Vilma» se populariza en Italia en los años 30 y 40.",
+  c:[["Testimonio familiar de Federico Carlini, 23-ago-2026"]]},
+franca:{t:1,n:"Franca De Faccio",d:"~1925-45",b:"friuli",pa:["gbD","santaC"],
+  note:"Hermana de Liliana. Sólo por testimonio familiar. «Franca» es de los nombres más frecuentes en la Italia de los años 30 y 40.",
+  c:[["Testimonio familiar de Federico Carlini, 23-ago-2026"]]},
+giorgio:{t:1,n:"Giorgio De Faccio",d:"~1925-45",b:"friuli",pa:["gbD","santaC"],
+  note:"Hermano de Liliana. Sólo por testimonio familiar. Único nombre tradicional del grupo.",
+  c:[["Testimonio familiar de Federico Carlini, 23-ago-2026"]]},
+
+/* ---- MORELLO: la candidata de Codroipo ---- */
+ferdinandoM:{n:"Ferdinando Morello",d:"?",b:"friuli",
+  note:"Padre de la única Ida Morello indexada en toda la provincia de Udine. El vínculo con nuestra Ida está SIN CONFIRMAR.",
+  c:[["FamilySearch, Udine 1871-1911, nacimiento de Codroipo 1895"]]},
+mariaZ:{n:"Maria Zanin",d:"?",b:"friuli",
+  c:[["FamilySearch, Udine 1871-1911, nacimiento de Codroipo 1895"]]},
+
+/* ---- CAGNOLINI de Latisana: tres generaciones documentadas ---- */
+giuseppeEM:{n:"Giuseppe Enrico Marzio Cagnolini",d:"1880",b:"friuli",pa:["luigiCag","santaPin"],
+  note:"Candidato a padre de Santa. Tendría 20 años en 1900, la edad justa. SIN CONFIRMAR: hace falta el acta de nacimiento de Santa.",
+  f:[["Nacimiento","29 de agosto de 1880, Latisana"]],
+  c:[["Latisana 1880, Nati","Giuseppe Enrico Marzio Cagnolini, di Luigi e Santa Pinzan"]]},
+luigiCag:{n:"Luigi Cagnolini",d:"~1840",b:"friuli",
+  note:"Padre de al menos cinco hijos en Latisana entre 1867 y 1880.",
+  c:[["Latisana, Nati e Matrimoni 1867-1880"]]},
+santaPin:{n:"Santa Pinzani",d:"~1845",b:"friuli",
+  note:"La clave onomástica de toda esta rama. Por la costumbre italiana, una nieta suya nacida hacia 1900 se habría llamado Santa Cagnolini — que es exactamente el nombre que buscamos.",
+  f:[["Variante","Pinzan, en el acta de 1880"]],
+  c:[["Latisana, Nati 1867-1880"]]},
+andreaCag:{n:"Andrea Cagnolini",d:"~1780",b:"friuli",
+  note:"Cabeza de la rama Cagnolini documentada en Latisana. NO se pudo establecer su vínculo con Luigi Cagnolini: son dos núcleos del mismo apellido en el mismo pueblo, sin acta que los una todavía.",
+  c:[["Latisana, Morti 1879-1888"]]},
+mariannaDon:{n:"Marianna Donati",d:"~1785",b:"friuli",c:[["Latisana, Morti 1879-1888"]]},
+carloCag:{n:"Carlo Cagnolini",d:"1808 – 1879",b:"friuli",pa:["andreaCag","mariannaDon"],
+  c:[["Latisana, Morti, defunción 3-may-1879"]]},
+elisabettaCag:{n:"Elisabetta Cagnolini",d:"1813 – 1881",b:"friuli",pa:["andreaCag","mariannaDon"],
+  note:"Casada con Gio Batta Toppani. Una hija suya se llamó Santa Toppani: el nombre circula por las dos ramas de la familia.",
+  c:[["Latisana, Morti, defunción 16-jun-1881"]]},
+angeloCag:{n:"Angelo Cagnolini",d:"1822 – 1888",b:"friuli",pa:["andreaCag","mariannaDon"],
+  c:[["Latisana, Morti, defunción 23-ene-1888"]]},
+giuseppeCag:{n:"Giuseppe Cagnolini",d:"1830 – 1898",b:"friuli",pa:["carloCag","caterinaFab"],
+  c:[["Latisana, Morti, defunción 9-mar-1898"]]},
+caterinaFab:{n:"Caterina Fabbroni",d:"?",b:"friuli",c:[["Latisana, Morti 1879"]]},
+carloCag2:{n:"Carlo Cagnolini",d:"1859 – 1892",b:"friuli",pa:["giuseppeCag","teresaMoz"],
+  c:[["Latisana, Morti, defunción 19-mar-1892"]]},
+teresaMoz:{n:"Teresa Mozzoni",d:"?",b:"friuli",c:[["Latisana, Morti 1898"]]},
+};
+</script>
+<script>
+const CW=196, CH=62, GAPX=54, GAPY=13, PADX=16, PADY=12;
+const canvas=document.getElementById('canvas'), links=document.getElementById('links'),
+      axis=document.getElementById('axis'), stage=document.getElementById('stage'),
+      split=document.getElementById('split'), panel=document.getElementById('panel');
+
+const ids=Object.keys(P);
+const parents=id=>(P[id]?.pa||[]).filter(x=>P[x]);
+const kids=id=>ids.filter(k=>(P[k].pa||[]).includes(id));
+
+/* ---- 1. generación: camino más largo desde un tronco sin padres conocidos ---- */
+const gen={}, guard=new Set();
+function genOf(id){
+  if(gen[id]!==undefined) return gen[id];
+  if(guard.has(id)) return 0;          // corta cualquier ciclo accidental
+  guard.add(id);
+  const pa=parents(id);
+  gen[id]=pa.length?Math.max(...pa.map(genOf))+1:0;
+  guard.delete(id);
+  return gen[id];
+}
+ids.forEach(genOf);
+const maxGen=Math.max(...ids.map(i=>gen[i]));
+
+/* ---- 2. layout tidy de descendencia ----
+   Recorrido en profundidad por los HIJOS, no por los padres. Cada persona sin
+   descendencia toma la siguiente fila libre; cada padre se centra sobre sus hijos.
+   Es lo que hace que se lea de un vistazo quién desciende de quién: los hermanos
+   salen contiguos y el padre queda enfrentado al bloque de su descendencia.
+
+   (Un barrido de baricentro daría menos cruces de líneas pero rompe justamente
+   esa contigüidad, y el dibujo se vuelve ilegible. La legibilidad manda.) */
+const SLOT=CH+GAPY;
+const y={}, done=new Set();
+let cursor=PADY;
+const BRANCH={sicilia:0,friuli:1,arg:2};
+const yearOf=id=>Number((P[id].d.match(/\d{4}/)||[9999])[0]);
+const byBirth=(a,b)=>yearOf(a)-yearOf(b);
+
+function place(id){
+  if(done.has(id)) return y[id];
+  done.add(id);
+  const ch=kids(id).sort(byBirth);
+  if(!ch.length){ y[id]=cursor; cursor+=SLOT; return y[id]; }
+  const ys=ch.map(place);
+  y[id]=(Math.min(...ys)+Math.max(...ys))/2;   // centrado sobre su descendencia
+  return y[id];
+}
+
+// troncos: sin padres conocidos, agrupados por rama para que Sicilia, Friuli
+// y Argentina no queden intercalados
+ids.filter(i=>gen[i]===0)
+   .sort((a,b)=>(BRANCH[P[a].b]??9)-(BRANCH[P[b].b]??9)||byBirth(a,b))
+   .forEach(place);
+ids.forEach(id=>{ if(!done.has(id)) place(id); });   // por si quedó alguien suelto
+
+// La pareja que "entra" a la familia no tiene padres ni fila propia: se la sienta
+// junto a su cónyuge, que es donde el ojo la busca.
+ids.forEach(id=>{
+  if(parents(id).length) return;
+  const conyuges=new Set();
+  kids(id).forEach(k=>parents(k).forEach(p=>{ if(p!==id) conyuges.add(p); }));
+  const ref=[...conyuges].filter(c=>parents(c).length)[0];
+  if(ref!==undefined) y[id]=y[ref]+SLOT*0.9;
+});
+
+// Desolapar dentro de cada columna sin alterar el orden vertical ya establecido
+const porGen={};
+ids.forEach(i=>(porGen[gen[i]] ||= []).push(i));
+Object.values(porGen).forEach(col=>{
+  col.sort((a,b)=>y[a]-y[b]);
+  let last=-Infinity;
+  col.forEach(id=>{ y[id]=Math.max(y[id],last+SLOT); last=y[id]; });
+});
+const minY=Math.min(...ids.map(i=>y[i]));
+ids.forEach(i=>y[i]=y[i]-minY+PADY);
+
+/* ---- 4. dibujar ---- */
+const GENNAME=['Tronco','2.ª generación','3.ª generación','4.ª generación','5.ª generación',
+               '6.ª generación','7.ª generación','8.ª generación','9.ª generación'];
+const W=PADX*2+(maxGen+1)*(CW+GAPX)-GAPX;
+const H=Math.max(...ids.map(i=>y[i]))+CH+PADY;
+const NS='http://www.w3.org/2000/svg';
+const AXIS_H=42;
+
+canvas.style.width=W+'px'; canvas.style.height=(H+AXIS_H)+'px';
+links.setAttribute('width',W); links.setAttribute('height',H+AXIS_H);
+
+for(let g=0;g<=maxGen;g++){
+  const yrs=(porGen[g]||[]).map(i=>(P[i].d.match(/\d{4}/)||[])[0]).filter(Boolean).map(Number);
+  const el=document.createElement('div'); el.style.width=(CW+GAPX)+'px';
+  el.innerHTML=`<b>${GENNAME[g]||('gen. '+(g+1))}</b><span>`+
+    (yrs.length?`${Math.min(...yrs)}–${Math.max(...yrs)}`:'')+`</span>`;
+  axis.appendChild(el);
+}
+
+const X=id=>PADX+gen[id]*(CW+GAPX);
+const edges=[];
+ids.forEach(id=>parents(id).forEach(par=>{
+  const x1=X(par)+CW, y1=y[par]+CH/2+AXIS_H, x2=X(id), y2=y[id]+CH/2+AXIS_H, mid=x1+GAPX/2;
+  const p=document.createElementNS(NS,'path');
+  p.setAttribute('d',`M${x1} ${y1} H${mid} V${y2} H${x2}`);
+  p.setAttribute('fill','none'); p.setAttribute('stroke-width','1.3');
+  if(P[id].hyp){
+    p.setAttribute('stroke','var(--open)'); p.setAttribute('stroke-dasharray','2 4');
+    const t=document.createElementNS(NS,'text');
+    t.setAttribute('x',mid+3); t.setAttribute('y',(y1+y2)/2-3);
+    t.setAttribute('fill','var(--open)'); t.setAttribute('font-size','9');
+    t.setAttribute('font-family','Source Sans 3,sans-serif'); t.textContent='HIPÓTESIS';
+    links.appendChild(t);
+  } else {
+    p.setAttribute('stroke','var(--line)');
+    if(P[id].t||P[par].t) p.setAttribute('stroke-dasharray','4 3');
+  }
+  p.dataset.a=par; p.dataset.b=id;
+  links.appendChild(p); edges.push(p);
+}));
+
+ids.forEach(id=>{
+  const p=P[id];
+  const b=document.createElement('button');
+  b.className='node'+(p.open?' op':'')+(p.hyp?' hyp':'')+(p.t&&!p.open&&!p.hyp?' test':'');
+  b.dataset.b=p.b; b.dataset.id=id;
+  b.style.cssText=`left:${X(id)}px;top:${y[id]+AXIS_H}px;width:${CW}px;min-height:${CH}px`;
+  b.innerHTML=`<span class="n">${p.n}</span><span class="d">${p.d}</span>`+
+    (p.open?'<span class="b open">frontera</span>':'')+
+    (p.dc?'<span class="b dc">dante causa</span>':'')+
+    (p.t&&!p.open?'<span class="b tt">testimonio</span>':'');
+  b.onclick=()=>open(id);
+  canvas.appendChild(b);
+});
+
+/* ---- 5. ficha ---- */
+function lineage(id){
+  const s=new Set([id]), up=[id], dn=[id];
+  while(up.length){ const c=up.pop(); parents(c).forEach(p=>{ if(!s.has(p)){s.add(p);up.push(p);} }); }
+  while(dn.length){ const c=dn.pop(); kids(c).forEach(k=>{ if(!s.has(k)){s.add(k);dn.push(k);} }); }
+  return s;
+}
+function open(id){
+  const p=P[id], fam=lineage(id);
+  document.querySelectorAll('.node').forEach(n=>{
+    n.classList.toggle('on',n.dataset.id===id);
+    n.classList.toggle('dim',!fam.has(n.dataset.id));
+  });
+  edges.forEach(e=>e.style.opacity=(fam.has(e.dataset.a)&&fam.has(e.dataset.b))?1:.12);
+
+  const srcTag = p.hyp ? '<span class="src-tag src-hyp">vínculo hipotético</span>'
+               : p.t   ? '<span class="src-tag src-test">sólo por testimonio familiar</span>'
+               : p.c?.length ? '<span class="src-tag src-doc">documentado</span>' : '';
+  let h=`<h2>${p.n}</h2><div class="sub">${p.d}</div>${srcTag}`;
+  if(p.note) h+=`<div class="note">${p.note}</div>`;
+  if(p.f?.length){ h+='<div class="grp"><h3>Datos</h3>';
+    p.f.forEach(([k,v,w,ok])=>{ h+=`<div class="row"><div class="kk">${k}</div>`+
+      `<div class="vv">${v}${ok?'<span class="ok">aceptada</span>':''}</div>`+
+      (w?`<div class="why">${w}</div>`:'')+'</div>'; }); h+='</div>'; }
+  if(p.c?.length){ h+='<div class="grp"><h3>Fuentes</h3>';
+    p.c.forEach(([c,q])=>h+=`<div class="cite">${c}${q?`<br><i>“${q}”</i>`:''}</div>`); h+='</div>'; }
+
+  const rel=[];
+  parents(id).forEach(x=>rel.push([x,'padre/madre']));
+  const sibs=new Set(); parents(id).forEach(x=>kids(x).forEach(s=>{if(s!==id)sibs.add(s);}));
+  [...sibs].forEach(x=>rel.push([x,'hermano/a']));
+  kids(id).forEach(x=>rel.push([x,'hijo/a']));
+  if(rel.length){ h+='<div class="grp"><h3>Familia</h3><div class="rel">';
+    rel.forEach(([k,r])=>h+=`<button data-go="${k}">${P[k].n} <span style="color:var(--faint)">· ${r}</span></button>`);
+    h+='</div></div>'; }
+
+  document.getElementById('panelIn').innerHTML=h;
+  panel.hidden=false; split.classList.add('open');
+  panel.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
+    open(b.dataset.go);
+    document.querySelector(`.node[data-id="${b.dataset.go}"]`)
+      ?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+  });
+}
+document.getElementById('close').onclick=()=>{
+  panel.hidden=true; split.classList.remove('open');
+  document.querySelectorAll('.node').forEach(n=>n.classList.remove('on','dim'));
+  edges.forEach(e=>e.style.opacity=1);
+};
+
+/* ---- 6. buscar ---- */
+document.getElementById('q').oninput=e=>{
+  const q=e.target.value.trim().toLowerCase();
+  document.querySelectorAll('.node').forEach(n=>{
+    const hit=!q||P[n.dataset.id].n.toLowerCase().includes(q);
+    n.classList.toggle('dim',!hit);
+  });
+  if(q){
+    const first=ids.find(i=>P[i].n.toLowerCase().includes(q));
+    if(first) document.querySelector(`.node[data-id="${first}"]`)
+      ?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+  }
+};
+
+const QS=[
+["Giovanni Novello: buscar donde no hay índices","Descartado en Latisana y en toda la provincia de Udine. Antenati corta en 1900 y FamilySearch en 1911, así que su nacimiento de ~1902 cae en un hueco que ningún archivo online cubre. La vía que no depende de índices es la lista di leva classe 1902 del Archivio di Stato di Udine, que llega hasta la clase 1944."],
+["Por qué la línea Fichera se frena en Rosario","No es falta de registros: es exceso de homónimos. Hay cinco Rosario Fichera en Acireale, cada uno casado con una María distinta, y cuatro nacidos en Giarre entre 1836 y 1844 con cuatro pares de padres diferentes. Al nuestro sólo lo distingue el apellido de su mujer, Bonaventura. La salida es el acta de nacimiento de Giovanni, Giarre 1869, que no está indexada."],
+["Pedir la partida de AGATA Fichera, no de Haydée","El nombre Agata viaja cuatro generaciones seguidas por la rama femenina: Agata Leonardi (~1818), Agata Castorina (~1873) y Haydée, que según el testimonio familiar fue bautizada Agata. Hay que pedir la partida a ese nombre, en Mar del Plata, ~1920-1930."],
+["Los hermanos de Liliana, en un solo documento","Ivonne, Vilma, Franca y Giorgio nacieron entre 1925 y 1945, de lleno en el hueco entre Antenati y FamilySearch. En vez de cinco partidas sueltas conviene pedir un stato di famiglia storico, que lista todo el hogar en una página. A Latisana y a San Giorgio di Nogaro: la familia se mudó entre 1929 y 1953."],
+["El acta de matrimonio Carlini × Fichera","El documento llave de la rama paterna: nombra a los cuatro abuelos y los dos lugares de nacimiento italianos. Mar del Plata, ~1945-1952. CARLINI no es apellido siciliano — se concentra en Marche, Umbría, Lazio, Emilia y Toscana — así que buscarlo en Catania fue buscar en la provincia equivocada."],
+["El libro de las familias de la Vía Galatea","En la biblioteca de un museo de Acireale hay un libro sobre las familias de la calle donde vivían los Fichera, casi con seguridad la Biblioteca Zelantea. Nadie lo consultó todavía; probablemente sea el mayor atajo de esta rama."],
+];
+const qs=document.getElementById('qs');
+QS.forEach(([t,b])=>{const d=document.createElement('div');d.className='card';
+  d.innerHTML=`<span class="pill">abierta</span><h3>${t}</h3><p>${b}</p>`;qs.appendChild(d);});
+</script>

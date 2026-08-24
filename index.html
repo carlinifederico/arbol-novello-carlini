@@ -198,45 +198,56 @@ function genOf(id){
 ids.forEach(genOf);
 const maxGen=Math.max(...ids.map(i=>gen[i]));
 
-/* ---- 2. orden dentro de cada generación: DFS desde los troncos ---- */
-/*        así los hermanos y su descendencia quedan juntos               */
-const order={}, placed=new Set();
-for(let g=0;g<=maxGen;g++) order[g]=[];
-const BRANCH={sicilia:0,friuli:1,arg:2};
-const roots=ids.filter(i=>gen[i]===0)
-  .sort((a,b)=>(BRANCH[P[a].b]??9)-(BRANCH[P[b].b]??9));
-(function walk(list){
-  for(const id of list){
-    if(placed.has(id)) continue;
-    placed.add(id); order[gen[id]].push(id);
-    walk(kids(id).sort((a,b)=>gen[a]-gen[b]));
-  }
-})(roots);
-ids.forEach(id=>{ if(!placed.has(id)){ placed.add(id); order[gen[id]].push(id); } });
+/* ---- 2. layout tidy de descendencia ----
+   Recorrido en profundidad por los HIJOS, no por los padres. Cada persona sin
+   descendencia toma la siguiente fila libre; cada padre se centra sobre sus hijos.
+   Es lo que hace que se lea de un vistazo quién desciende de quién: los hermanos
+   salen contiguos y el padre queda enfrentado al bloque de su descendencia.
 
-/* ---- 3. baricentro: cada quien tiende al promedio de sus padres ---- */
+   (Un barrido de baricentro daría menos cruces de líneas pero rompe justamente
+   esa contigüidad, y el dibujo se vuelve ilegible. La legibilidad manda.) */
 const SLOT=CH+GAPY;
-let y={};
-for(let g=0;g<=maxGen;g++) order[g].forEach((id,i)=>y[id]=i*SLOT);
-for(let pass=0;pass<3;pass++){
-  for(let g=1;g<=maxGen;g++){
-    order[g].sort((a,b)=>{
-      const ba=parents(a).length?parents(a).reduce((s,p)=>s+y[p],0)/parents(a).length:y[a];
-      const bb=parents(b).length?parents(b).reduce((s,p)=>s+y[p],0)/parents(b).length:y[b];
-      return ba-bb;
-    });
-    order[g].forEach((id,i)=>y[id]=i*SLOT);
-  }
-  for(let g=maxGen-1;g>=0;g--){       // y los padres, al promedio de sus hijos
-    order[g].forEach(id=>{
-      const k=kids(id).filter(c=>y[c]!==undefined);
-      if(k.length) y[id]=k.reduce((s,c)=>s+y[c],0)/k.length;
-    });
-    order[g].sort((a,b)=>y[a]-y[b]);
-    let last=-Infinity;                // desolapar sin romper el orden
-    order[g].forEach(id=>{ y[id]=Math.max(y[id],last+SLOT); last=y[id]; });
-  }
+const y={}, done=new Set();
+let cursor=PADY;
+const BRANCH={sicilia:0,friuli:1,arg:2};
+const yearOf=id=>Number((P[id].d.match(/\d{4}/)||[9999])[0]);
+const byBirth=(a,b)=>yearOf(a)-yearOf(b);
+
+function place(id){
+  if(done.has(id)) return y[id];
+  done.add(id);
+  const ch=kids(id).sort(byBirth);
+  if(!ch.length){ y[id]=cursor; cursor+=SLOT; return y[id]; }
+  const ys=ch.map(place);
+  y[id]=(Math.min(...ys)+Math.max(...ys))/2;   // centrado sobre su descendencia
+  return y[id];
 }
+
+// troncos: sin padres conocidos, agrupados por rama para que Sicilia, Friuli
+// y Argentina no queden intercalados
+ids.filter(i=>gen[i]===0)
+   .sort((a,b)=>(BRANCH[P[a].b]??9)-(BRANCH[P[b].b]??9)||byBirth(a,b))
+   .forEach(place);
+ids.forEach(id=>{ if(!done.has(id)) place(id); });   // por si quedó alguien suelto
+
+// La pareja que "entra" a la familia no tiene padres ni fila propia: se la sienta
+// junto a su cónyuge, que es donde el ojo la busca.
+ids.forEach(id=>{
+  if(parents(id).length) return;
+  const conyuges=new Set();
+  kids(id).forEach(k=>parents(k).forEach(p=>{ if(p!==id) conyuges.add(p); }));
+  const ref=[...conyuges].filter(c=>parents(c).length)[0];
+  if(ref!==undefined) y[id]=y[ref]+SLOT*0.9;
+});
+
+// Desolapar dentro de cada columna sin alterar el orden vertical ya establecido
+const porGen={};
+ids.forEach(i=>(porGen[gen[i]] ||= []).push(i));
+Object.values(porGen).forEach(col=>{
+  col.sort((a,b)=>y[a]-y[b]);
+  let last=-Infinity;
+  col.forEach(id=>{ y[id]=Math.max(y[id],last+SLOT); last=y[id]; });
+});
 const minY=Math.min(...ids.map(i=>y[i]));
 ids.forEach(i=>y[i]=y[i]-minY+PADY);
 
@@ -252,7 +263,7 @@ canvas.style.width=W+'px'; canvas.style.height=(H+AXIS_H)+'px';
 links.setAttribute('width',W); links.setAttribute('height',H+AXIS_H);
 
 for(let g=0;g<=maxGen;g++){
-  const yrs=order[g].map(i=>(P[i].d.match(/\d{4}/)||[])[0]).filter(Boolean).map(Number);
+  const yrs=(porGen[g]||[]).map(i=>(P[i].d.match(/\d{4}/)||[])[0]).filter(Boolean).map(Number);
   const el=document.createElement('div'); el.style.width=(CW+GAPX)+'px';
   el.innerHTML=`<b>${GENNAME[g]||('gen. '+(g+1))}</b><span>`+
     (yrs.length?`${Math.min(...yrs)}–${Math.max(...yrs)}`:'')+`</span>`;
