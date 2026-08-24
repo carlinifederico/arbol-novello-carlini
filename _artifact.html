@@ -406,27 +406,63 @@ const ids=Object.keys(P);
 const parents=id=>(P[id]?.pa||[]).filter(x=>P[x]);
 const kids=id=>ids.filter(k=>(P[k].pa||[]).includes(id));
 
-/* ---- 1. generación, medida DESDE EL PRESENTE ----
-   Contar desde arriba manda a la columna 0 a todo el que no tiene padres
-   conocidos, y ahí terminan mezclados un siciliano de 1810 con un friulano de
-   1900 sólo porque de los dos ignoramos a sus padres. Midiendo la distancia a
-   la generación más joven, cada quien cae en la columna que le corresponde por
-   dónde está parado en la familia, que es lo que uno espera leer. */
-const depth={}, guard=new Set();
-function depthOf(id){
-  if(depth[id]!==undefined) return depth[id];
-  if(guard.has(id)) return 0;          // corta cualquier ciclo accidental
-  guard.add(id);
-  const ch=kids(id);
-  depth[id]=ch.length?Math.max(...ch.map(depthOf))+1:0;
-  guard.delete(id);
-  return depth[id];
+/* ---- 1. generación ----
+   La única regla que importa: un hijo va exactamente una columna después de sus
+   padres. Eso no se resuelve contando desde un extremo.
+
+   Contando desde arriba, todo el que no tiene padres conocidos cae en la columna
+   cero, y ahí terminan juntos un siciliano de 1810 y un friulano de 1900.
+   Contando desde abajo es peor: todo el que no tiene hijos registrados cae en la
+   última columna, y las hermanas de Liliana quedaban al lado de Antonio, con
+   ochenta años de diferencia.
+
+   Se resuelve relajando las dos restricciones a la vez hasta que dejan de
+   moverse: quien tiene padres se para detrás del más joven de ellos; quien no
+   los tiene, se para justo delante del mayor de sus hijos. */
+/* Falta una restricción que no es evidente: los dos padres de un mismo hijo
+   tienen que caer en la misma columna. Sin eso, Maia quedaba siete columnas
+   detrás de Federico —porque de ella conocemos dos generaciones de ancestros y
+   de él siete— y su hijo Antonio salía disparado al final del dibujo.
+
+   Se resuelve uniendo a los co-padres en un mismo grupo y calculando la
+   generación por grupo, no por persona. */
+const padre={};                                    // union-find
+const find=x=>padre[x]===x?x:(padre[x]=find(padre[x]));
+const une=(a,b)=>{ const ra=find(a),rb=find(b); if(ra!==rb) padre[ra]=rb; };
+ids.forEach(i=>padre[i]=i);
+ids.forEach(id=>{ const pa=parents(id); for(let i=1;i<pa.length;i++) une(pa[0],pa[i]); }); // cónyuges
+ids.forEach(id=>{ const ch=kids(id);  for(let i=1;i<ch.length;i++) une(ch[0],ch[i]); }); // hermanos
+
+// aristas entre grupos: el grupo de los padres precede al grupo del hijo
+const salidas={}, entradas={};
+ids.forEach(i=>{ salidas[find(i)]=salidas[find(i)]||new Set(); entradas[find(i)]=entradas[find(i)]||new Set(); });
+ids.forEach(id=>{ const pa=parents(id); if(!pa.length) return;
+  const a=find(pa[0]), b=find(id);
+  if(a!==b){ salidas[a].add(b); entradas[b].add(a); } });
+
+/* Dos barridos hasta que dejen de moverse:
+   – hacia adelante, cada hijo se corre detrás del más tardío de sus padres;
+   – hacia atrás, cada padre se acerca hasta quedar justo delante del más
+     temprano de sus hijos.
+   Sin el segundo, un padre cuya rama tiene pocos ancestros conocidos queda dos
+   o tres columnas antes que su propio hijo: José María López terminaba seis
+   columnas detrás de su hija Maia. */
+const gGrupo={}; Object.keys(salidas).forEach(g=>gGrupo[g]=0);
+for(let it=0; it<80; it++){
+  let cambio=false;
+  for(const g of Object.keys(salidas))
+    for(const h of salidas[g])
+      if(gGrupo[h]<gGrupo[g]+1){ gGrupo[h]=gGrupo[g]+1; cambio=true; }
+  for(const g of Object.keys(salidas)){
+    if(!salidas[g].size) continue;
+    const m=Math.min(...[...salidas[g]].map(h=>gGrupo[h]))-1;
+    if(m>gGrupo[g]){ gGrupo[g]=m; cambio=true; }
+  }
+  if(!cambio) break;
 }
-ids.forEach(depthOf);
-const maxDepth=Math.max(...ids.map(i=>depth[i]));
 const gen={};
-ids.forEach(i=>gen[i]=maxDepth-depth[i]);   // izquierda = más antiguo
-const maxGen=maxDepth;
+ids.forEach(i=>gen[i]=gGrupo[find(i)]);    // izquierda = más antiguo
+const maxGen=Math.max(...ids.map(i=>gen[i]));
 
 /* ---- 2. layout tidy de descendencia ----
    Recorrido en profundidad por los HIJOS, no por los padres. Cada persona sin

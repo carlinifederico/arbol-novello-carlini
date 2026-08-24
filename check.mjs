@@ -40,4 +40,57 @@ for (const [re, label] of [
 
 const c = (f) => Object.values(P).filter(f).length
 console.log(`personas: ${Object.keys(P).length} · documentadas: ${c((p) => p.c?.length && !p.t)} · testimonio: ${c((p) => p.t)} · hipótesis: ${c((p) => p.hyp)} · fronteras: ${c((p) => p.open)} · errores: ${bad}`)
+
+/* --- Las generaciones: el mismo modelo que usa el dibujo, verificado aparte ---
+   Tres reglas que tienen que cumplirse a la vez, y que se rompieron una por una
+   hasta dar con el modelo correcto:
+     1. cada hijo va exactamente una generación después de sus padres
+     2. los dos padres de un hijo comparten generación
+     3. los hermanos comparten generación
+   Además los años deben avanzar: ninguna generación puede empezar antes que la
+   anterior. */
+{
+  const ids = Object.keys(P)
+  const pa = (id) => (P[id]?.pa ?? []).filter((x) => P[x])
+  const ch = (id) => ids.filter((k) => (P[k].pa ?? []).includes(id))
+  const uf = {}; ids.forEach((i) => (uf[i] = i))
+  const find = (x) => (uf[x] === x ? x : (uf[x] = find(uf[x])))
+  const une = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) uf[ra] = rb }
+  ids.forEach((id) => { const p = pa(id); for (let i = 1; i < p.length; i++) une(p[0], p[i]) })
+  ids.forEach((id) => { const c = ch(id); for (let i = 1; i < c.length; i++) une(c[0], c[i]) })
+
+  const out = {}; ids.forEach((i) => (out[find(i)] ??= new Set()))
+  ids.forEach((id) => { const p = pa(id); if (!p.length) return
+    const a = find(p[0]), b = find(id); if (a !== b) out[a].add(b) })
+
+  const g = {}; Object.keys(out).forEach((k) => (g[k] = 0))
+  for (let it = 0; it < 80; it++) {
+    let moved = false
+    for (const k of Object.keys(out)) for (const h of out[k]) if (g[h] < g[k] + 1) { g[h] = g[k] + 1; moved = true }
+    for (const k of Object.keys(out)) { if (!out[k].size) continue
+      const m = Math.min(...[...out[k]].map((h) => g[h])) - 1
+      if (m > g[k]) { g[k] = m; moved = true } }
+    if (!moved) break
+  }
+  const gen = {}; ids.forEach((i) => (gen[i] = g[find(i)]))
+
+  ids.forEach((id) => pa(id).forEach((p) => {
+    if (gen[id] !== gen[p] + 1) { bad++; console.log(`GENERACIÓN  ${P[p].n} (g${gen[p]}) -> ${P[id].n} (g${gen[id]})`) }
+  }))
+  ids.forEach((id) => {
+    const c = ch(id); if (new Set(c.map((x) => gen[x])).size > 1) {
+      bad++; console.log(`HERMANOS EN DISTINTA GENERACIÓN: ${c.map((x) => P[x].n).join(', ')}`) }
+  })
+
+  const yr = (id) => { const m = P[id].d?.match(/\d{4}/); return m ? +m[0] : null }
+  const rango = {}
+  ids.forEach((i) => { const y = yr(i); if (y == null) return
+    ;(rango[gen[i]] ??= []).push(y) })
+  const gs = Object.keys(rango).map(Number).sort((a, b) => a - b)
+  for (let i = 1; i < gs.length; i++) {
+    const antes = Math.min(...rango[gs[i - 1]]), ahora = Math.min(...rango[gs[i]])
+    if (ahora < antes) { bad++; console.log(`AÑOS AL REVÉS: gen ${gs[i]} empieza en ${ahora}, antes que gen ${gs[i - 1]} en ${antes}`) }
+  }
+  console.log(`generaciones: ${gs.length} · ` + gs.map((k) => `g${k} ${Math.min(...rango[k])}–${Math.max(...rango[k])}`).join(' · '))
+}
 process.exit(bad ? 1 : 0)
