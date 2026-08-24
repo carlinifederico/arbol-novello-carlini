@@ -1,176 +1,184 @@
 <title>Árbol Novello Carlini</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Source+Sans+3:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
 
 <style>
 :root{
-  --paper:#f3f2ef; --card:#fff; --ink:#1a1e1c; --muted:#6d7572; --faint:#9aa19e;
-  --line:#dcdbd5; --soft:#e9e8e3;
-  --friuli:#2f6b5e; --friuli-bg:#e6efec;
-  --sicilia:#8c3552; --sicilia-bg:#f4e7eb;
-  --arg:#3c5a72;  --arg-bg:#e6ecf1;
-  --open:#8a5a1b; --open-bg:#f6eddd;
-  --shadow:0 1px 2px rgba(26,30,28,.06),0 10px 28px -20px rgba(26,30,28,.4);
+  --bg:#eeece7; --grid:#e4e1da; --card:#fffefb; --ink:#191c1a; --muted:#6b716d; --faint:#a3a8a4;
+  --line:#d3cfc6; --hair:#e6e3db;
+  --sicilia:#9b3350; --sicilia-soft:#f3e3e7;
+  --friuli:#286b5c;  --friuli-soft:#e2eeea;
+  --arg:#35566f;     --arg-soft:#e3eaef;
+  --open:#8a5514;    --open-soft:#f7ecda;
+  --lift:0 1px 1px rgba(25,28,26,.04), 0 3px 8px -4px rgba(25,28,26,.18);
+  --lift-2:0 2px 4px rgba(25,28,26,.06), 0 18px 40px -22px rgba(25,28,26,.5);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#131715; --card:#1b201e; --ink:#e9eae7; --muted:#98a09c; --faint:#6d7572;
-  --line:#2a312e; --soft:#212724;
-  --friuli:#7cc0ac; --friuli-bg:#1a2a26;
-  --sicilia:#e08fa6; --sicilia-bg:#2b1b21;
-  --arg:#8fb3cf;  --arg-bg:#1a232a;
-  --open:#dda75f; --open-bg:#2a2318;
-  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -20px rgba(0,0,0,.9);
+  --bg:#101312; --grid:#171b19; --card:#1a1f1d; --ink:#eceeeb; --muted:#98a09b; --faint:#666e69;
+  --line:#2b322e; --hair:#222825;
+  --sicilia:#e592a8; --sicilia-soft:#2a1a20;
+  --friuli:#77c2ac;  --friuli-soft:#172a25;
+  --arg:#8fb6d4;     --arg-soft:#16222b;
+  --open:#dba764;    --open-soft:#2a2116;
+  --lift:0 1px 1px rgba(0,0,0,.3), 0 3px 8px -4px rgba(0,0,0,.7);
+  --lift-2:0 2px 4px rgba(0,0,0,.4), 0 18px 40px -22px rgba(0,0,0,1);
 }}
 :root[data-theme="dark"]{
-  --paper:#131715; --card:#1b201e; --ink:#e9eae7; --muted:#98a09c; --faint:#6d7572;
-  --line:#2a312e; --soft:#212724;
-  --friuli:#7cc0ac; --friuli-bg:#1a2a26;
-  --sicilia:#e08fa6; --sicilia-bg:#2b1b21;
-  --arg:#8fb3cf;  --arg-bg:#1a232a;
-  --open:#dda75f; --open-bg:#2a2318;
-  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -20px rgba(0,0,0,.9);
+  --bg:#101312; --grid:#171b19; --card:#1a1f1d; --ink:#eceeeb; --muted:#98a09b; --faint:#666e69;
+  --line:#2b322e; --hair:#222825;
+  --sicilia:#e592a8; --sicilia-soft:#2a1a20;
+  --friuli:#77c2ac;  --friuli-soft:#172a25;
+  --arg:#8fb6d4;     --arg-soft:#16222b;
+  --open:#dba764;    --open-soft:#2a2116;
+  --lift:0 1px 1px rgba(0,0,0,.3), 0 3px 8px -4px rgba(0,0,0,.7);
+  --lift-2:0 2px 4px rgba(0,0,0,.4), 0 18px 40px -22px rgba(0,0,0,1);
 }
+
 *{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);
-  font-family:"Source Sans 3",system-ui,sans-serif;font-size:16px;line-height:1.55;
-  -webkit-font-smoothing:antialiased}
-h1,h2,h3{font-family:Newsreader,Georgia,serif;font-weight:500;margin:0;text-wrap:balance}
-.wrap{max-width:1500px;margin:0 auto;padding:0 20px}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;
+  font-family:"Inter Tight",system-ui,sans-serif;font-size:15px;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
 
-header{border-bottom:1px solid var(--line);padding:34px 0 22px}
-.kicker{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
-h1{font-size:clamp(26px,4vw,38px);line-height:1.08;letter-spacing:-.015em}
-.lede{max-width:62ch;margin-top:11px;color:var(--muted);font-size:15.5px}
-
-.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:14px 0 12px}
-.k{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);
-  border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--card)}
-.dot{width:8px;height:8px;border-radius:50%;flex:none}
-.sw{width:16px;height:10px;border-radius:3px;border:1px solid var(--muted);flex:none}
+/* ---------- marco de aplicación, a pantalla completa ---------- */
+.app{position:fixed;inset:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:14px;padding:10px 16px;flex:none;
+  border-bottom:1px solid var(--hair);background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(10px);z-index:30}
+.brand{font-family:Fraunces,Georgia,serif;font-size:17px;font-weight:500;letter-spacing:-.01em;white-space:nowrap}
+.brand small{display:block;font-family:"Inter Tight",sans-serif;font-size:10.5px;font-weight:400;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-top:1px}
+.tools{display:flex;align-items:center;gap:7px;margin-left:auto;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);
+  border:1px solid var(--line);border-radius:999px;padding:3px 9px;background:var(--card);white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.sw{width:15px;height:9px;border-radius:2px;border:1px solid var(--muted);flex:none}
 .sw.d{border-style:dashed}
-.sw.h{border-style:dashed;border-color:var(--open);background:var(--open-bg)}
-input[type=search]{font:inherit;font-size:13.5px;padding:5px 11px;border:1px solid var(--line);
-  border-radius:999px;background:var(--card);color:inherit;min-width:190px}
+.sw.h{border-style:dashed;border-color:var(--open);background:var(--open-soft)}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:5px 11px;
+  font-size:12.5px;cursor:pointer;transition:background .12s}
+.btn:hover{background:var(--grid)}
+.btn:focus-visible{outline:2px solid var(--arg);outline-offset:1px}
+input[type=search]{font:inherit;font-size:12.5px;padding:5px 11px;border:1px solid var(--line);
+  border-radius:999px;background:var(--card);color:inherit;width:170px}
 input[type=search]:focus-visible{outline:2px solid var(--arg);outline-offset:1px}
 
-/* --- el árbol y la ficha, lado a lado: la ficha NO tapa el dibujo --- */
-.split{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
-.split.open{grid-template-columns:minmax(0,1fr) 370px}
-@media (max-width:1080px){ .split.open{grid-template-columns:minmax(0,1fr)} }
+.body{flex:1;display:flex;min-height:0}
+.viewport{flex:1;position:relative;overflow:hidden;cursor:grab;
+  background-image:radial-gradient(var(--grid) 1px,transparent 1px);background-size:26px 26px}
+.viewport.drag{cursor:grabbing}
+.world{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
 
-.stage{position:relative;overflow:auto;border:1px solid var(--line);border-radius:14px;
-  background:var(--card);box-shadow:var(--shadow);max-height:78vh}
-.canvas{position:relative}
-svg.links{position:absolute;inset:0;pointer-events:none;overflow:visible}
-.axis{position:sticky;top:0;display:flex;background:var(--card);border-bottom:1px solid var(--soft);z-index:5}
-.axis div{flex:none;padding:8px 12px;border-right:1px solid var(--soft)}
-.axis b{display:block;font-family:Newsreader,serif;font-size:13.5px;font-weight:500}
-.axis span{font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+/* bandas de generación, detrás de todo */
+.band{position:absolute;left:0;pointer-events:none}
+.band i{position:absolute;inset:0;background:var(--card);opacity:.5}
+.band b{position:absolute;left:14px;top:10px;font-family:Fraunces,serif;font-size:15px;
+  font-weight:500;color:var(--muted);white-space:nowrap}
+.band b span{font-family:"Inter Tight",sans-serif;font-size:11px;color:var(--faint);
+  margin-left:8px;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 
-.node{position:absolute;background:var(--card);border:1px solid var(--line);
-  border-left-width:3px;border-radius:9px;padding:7px 10px;cursor:pointer;
-  font:inherit;text-align:left;color:inherit;transition:opacity .15s,box-shadow .12s}
-.node:hover{box-shadow:var(--shadow)}
-.node:focus-visible{outline:2px solid var(--arg);outline-offset:2px}
-.node.on{box-shadow:0 0 0 2px var(--ink)}
-.node.dim{opacity:.22}
-.node[data-b=friuli]{border-left-color:var(--friuli)}
-.node[data-b=sicilia]{border-left-color:var(--sicilia)}
-.node[data-b=arg]{border-left-color:var(--arg)}
-.node.test{border-style:dashed;border-left-style:solid}
-.node.hyp{border-style:dashed;border-left-style:solid;border-color:var(--open);background:var(--open-bg)}
-.node.op{border-style:dashed;border-left-style:solid;background:var(--open-bg)}
-.node .n{display:block;font-size:13px;font-weight:600;line-height:1.22}
-.node .d{display:block;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:1px}
-.node .b{display:inline-block;margin-top:3px;font-size:9px;letter-spacing:.06em;
-  text-transform:uppercase;padding:1px 5px;border-radius:3px}
-.b.open{background:var(--open-bg);color:var(--open);border:1px solid var(--open)}
-.b.dc{background:var(--friuli-bg);color:var(--friuli)}
-.b.tt{color:var(--faint);border:1px dashed var(--line)}
+svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 
-.panel{border:1px solid var(--line);border-radius:14px;background:var(--card);
-  box-shadow:var(--shadow);padding:20px 22px 26px;position:sticky;top:14px;
-  max-height:78vh;overflow-y:auto}
-.panel h2{font-size:21px;line-height:1.15;padding-right:34px}
-.panel .sub{color:var(--muted);font-size:13px;margin-top:2px;font-variant-numeric:tabular-nums}
-.close{position:absolute;top:13px;right:15px;appearance:none;border:1px solid var(--line);
-  background:var(--card);border-radius:8px;width:28px;height:28px;cursor:pointer;color:var(--muted)}
-.src-tag{display:inline-block;margin-top:9px;font-size:10px;letter-spacing:.07em;
-  text-transform:uppercase;padding:2px 7px;border-radius:3px}
-.src-doc{background:var(--friuli-bg);color:var(--friuli)}
-.src-test{background:var(--soft);color:var(--muted)}
-.src-hyp{background:var(--open-bg);color:var(--open)}
-.note{margin-top:12px;font-size:13.5px;line-height:1.55;color:var(--muted);
-  border-left:2px solid var(--line);padding-left:11px}
-.grp{margin-top:18px}
-.grp h3{font-family:"Source Sans 3",sans-serif;font-size:10.5px;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:7px}
-.row{padding:7px 0;border-top:1px solid var(--soft)}
-.row:first-of-type{border-top:0}
-.row .kk{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
-.row .vv{font-size:14px;margin-top:1px}
-.ok{display:inline-block;font-size:9px;letter-spacing:.06em;text-transform:uppercase;
-  background:var(--friuli-bg);color:var(--friuli);padding:1px 5px;border-radius:3px;margin-left:5px}
-.why{margin-top:6px;font-size:12.5px;line-height:1.5;color:var(--muted);
-  background:var(--paper);border-radius:7px;padding:7px 9px}
-.cite{font-family:"JetBrains Mono",monospace;font-size:10.5px;line-height:1.5;color:var(--muted);
-  margin-top:5px;padding-left:9px;border-left:1px solid var(--line);word-break:break-word}
-.cite i{font-family:"Source Sans 3",sans-serif;font-size:11.5px}
-.rel{display:flex;flex-wrap:wrap;gap:5px}
-.rel button{appearance:none;border:1px solid var(--line);background:var(--card);border-radius:8px;
-  padding:3px 8px;font:inherit;font-size:12px;cursor:pointer;color:inherit}
-.rel button:hover{background:var(--soft)}
+.p{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:11px;
+  padding:8px 11px;text-align:left;cursor:pointer;box-shadow:var(--lift);
+  transition:opacity .18s,box-shadow .15s,transform .15s;border-top:3px solid var(--line)}
+.p:hover{box-shadow:var(--lift-2);transform:translateY(-1px)}
+.p:focus-visible{outline:2px solid var(--arg);outline-offset:3px}
+.p.sel{box-shadow:0 0 0 2px var(--ink),var(--lift-2)}
+.p.mute{opacity:.16}
+.p[data-b=sicilia]{border-top-color:var(--sicilia)}
+.p[data-b=friuli]{border-top-color:var(--friuli)}
+.p[data-b=arg]{border-top-color:var(--arg)}
+.p.test{border-style:dashed;border-top-style:solid}
+.p.open{border-style:dashed;border-top-style:solid;background:var(--open-soft)}
+.p .nm{display:block;font-size:13px;font-weight:600;line-height:1.24;letter-spacing:-.005em}
+.p .yr{display:block;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
+.p .tag{display:inline-block;margin-top:4px;font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;
+  padding:1px 5px;border-radius:3px}
+.tag.f{background:var(--open-soft);color:var(--open);border:1px solid var(--open)}
+.tag.dc{background:var(--friuli-soft);color:var(--friuli)}
+.tag.t{color:var(--faint);border:1px dashed var(--line)}
 
-footer{border-top:1px solid var(--line);margin-top:34px;padding:26px 0 60px}
-.cols{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));margin-top:15px}
-.card{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:15px 16px}
-.card h3{font-size:15.5px;line-height:1.3;margin-bottom:6px}
-.card p{margin:0;font-size:13px;line-height:1.55;color:var(--muted)}
-.pill{display:inline-block;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
-  padding:2px 7px;border-radius:3px;margin-bottom:7px;background:var(--open-bg);color:var(--open)}
-.hint{font-size:12.5px;color:var(--faint);margin-top:8px}
+/* ---------- ficha ---------- */
+.sheet{flex:none;width:0;overflow:hidden;transition:width .22s ease;
+  border-left:1px solid var(--hair);background:var(--card)}
+.sheet.on{width:376px}
+@media (max-width:820px){ .sheet.on{width:100%;position:absolute;inset:0;z-index:40} }
+.sheet-in{width:376px;max-width:100vw;height:100%;overflow-y:auto;padding:20px 22px 40px}
+@media (max-width:820px){ .sheet-in{width:100%} }
+.sheet h2{font-family:Fraunces,serif;font-size:22px;font-weight:500;line-height:1.15;
+  margin:0;padding-right:36px;letter-spacing:-.01em}
+.sheet .sub{color:var(--muted);font-size:12.5px;margin-top:3px;font-variant-numeric:tabular-nums}
+.x{position:absolute;top:12px;right:14px;border:1px solid var(--line);background:var(--card);
+  border-radius:9px;width:28px;height:28px;cursor:pointer;color:var(--muted);z-index:2}
+.stamp{display:inline-block;margin-top:10px;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 8px;border-radius:4px}
+.st-doc{background:var(--friuli-soft);color:var(--friuli)}
+.st-test{background:var(--grid);color:var(--muted)}
+.st-hyp{background:var(--open-soft);color:var(--open)}
+.note{margin-top:13px;font-size:13px;line-height:1.6;color:var(--muted);
+  border-left:2px solid var(--line);padding-left:12px}
+.sec{margin-top:20px}
+.sec h3{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
+  font-weight:600;margin:0 0 8px}
+.r{padding:8px 0;border-top:1px solid var(--hair)}
+.r:first-of-type{border-top:0}
+.r .k{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+.r .v{font-size:13.5px;margin-top:2px;line-height:1.45}
+.pick{display:inline-block;font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;
+  background:var(--friuli-soft);color:var(--friuli);padding:1px 5px;border-radius:3px;margin-left:6px}
+.why{margin-top:7px;font-size:12px;line-height:1.55;color:var(--muted);
+  background:var(--bg);border-radius:8px;padding:8px 10px}
+.cite{font-family:"JetBrains Mono",monospace;font-size:10px;line-height:1.55;color:var(--muted);
+  margin-top:6px;padding-left:10px;border-left:1px solid var(--line);word-break:break-word}
+.cite i{font-family:"Inter Tight",sans-serif;font-size:11px}
+.kin{display:flex;flex-wrap:wrap;gap:5px}
+.kin button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 9px;
+  font-size:12px;cursor:pointer}
+.kin button:hover{background:var(--grid)}
+.kin small{color:var(--faint)}
+
+.zoom{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:6px;z-index:20}
+.zoom button{width:34px;height:34px;border:1px solid var(--line);background:var(--card);
+  border-radius:9px;cursor:pointer;box-shadow:var(--lift);font-size:15px}
+.zoom button:hover{background:var(--grid)}
+.hintbar{position:absolute;left:14px;bottom:14px;font-size:11px;color:var(--faint);z-index:20;
+  background:color-mix(in srgb,var(--bg) 80%,transparent);padding:4px 9px;border-radius:7px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
-<header><div class="wrap">
-  <div class="kicker">Giarre · Acireale · Latisana · San Giorgio di Nogaro · Bella Vista · Mar del Plata</div>
-  <h1>Árbol Novello · Carlini</h1>
-  <p class="lede">La familia entera en un solo dibujo, de los tatarabuelos sicilianos de ~1810
-    hasta Antonio, Felipe y Facundo. Cada persona lleva la fuente de lo que se sabe de ella:
-    un acta, el testimonio de la familia, o una hipótesis marcada como tal.</p>
-</div></header>
-
-<div class="wrap">
-  <div class="bar">
-    <span class="k"><i class="dot" style="background:var(--sicilia)"></i>Sicilia</span>
-    <span class="k"><i class="dot" style="background:var(--friuli)"></i>Friuli</span>
-    <span class="k"><i class="dot" style="background:var(--arg)"></i>Argentina</span>
-    <span class="k"><i class="sw"></i>documentado</span>
-    <span class="k"><i class="sw d"></i>testimonio familiar</span>
-    <span class="k"><i class="sw h"></i>hipótesis o frontera</span>
-    <input type="search" id="q" placeholder="Buscar una persona…" aria-label="Buscar">
-  </div>
-
-  <div class="split" id="split">
-    <div class="stage" id="stage">
-      <div class="axis" id="axis"></div>
-      <div class="canvas" id="canvas"><svg class="links" id="links"></svg></div>
+<div class="app">
+  <div class="top">
+    <div class="brand">Árbol Novello · Carlini<small>Sicilia · Friuli · Argentina · 1780–2017</small></div>
+    <div class="tools">
+      <span class="chip"><i class="dot" style="background:var(--sicilia)"></i>Sicilia</span>
+      <span class="chip"><i class="dot" style="background:var(--friuli)"></i>Friuli</span>
+      <span class="chip"><i class="dot" style="background:var(--arg)"></i>Argentina</span>
+      <span class="chip"><i class="sw"></i>acta</span>
+      <span class="chip"><i class="sw d"></i>testimonio</span>
+      <span class="chip"><i class="sw h"></i>hipótesis</span>
+      <input type="search" id="q" placeholder="Buscar…" aria-label="Buscar una persona">
+      <button class="btn" id="fit">Ver todo</button>
     </div>
-    <aside class="panel" id="panel" hidden>
-      <button class="close" id="close" aria-label="Cerrar">×</button>
-      <div id="panelIn"></div>
-    </aside>
   </div>
-  <p class="hint">
-    Las columnas son generaciones. Cada línea va de una persona a su padre o a su madre.
-    Al elegir a alguien se resalta su linaje completo, hacia arriba y hacia abajo.
-  </p>
 
-  <footer>
-    <h2>Dónde se corta, y por qué</h2>
-    <div class="cols" id="qs"></div>
-  </footer>
+  <div class="body">
+    <div class="viewport" id="vp">
+      <div class="world" id="world">
+        <div id="bands"></div>
+        <svg class="wires" id="wires"></svg>
+        <div id="people"></div>
+      </div>
+      <div class="zoom">
+        <button id="zin" aria-label="Acercar">+</button>
+        <button id="zout" aria-label="Alejar">−</button>
+      </div>
+      <div class="hintbar">Arrastrá para mover · rueda para acercar · clic en alguien para ver su ficha</div>
+    </div>
+    <aside class="sheet" id="sheet"><div class="sheet-in" id="sheetIn"></div>
+      <button class="x" id="x" aria-label="Cerrar">×</button></aside>
+  </div>
 </div>
 
 <script>/** Las personas del árbol. Cada una con su fuente: acta, testimonio o hipótesis. */
@@ -397,276 +405,300 @@ teresaMoz:{n:"Teresa Mozzoni",d:"?",b:"friuli",c:[["Latisana, Morti 1898"]]},
 };
 </script>
 <script>
-const CW=196, CH=62, GAPX=54, GAPY=13, PADX=16, PADY=12;
-const canvas=document.getElementById('canvas'), links=document.getElementById('links'),
-      axis=document.getElementById('axis'), stage=document.getElementById('stage'),
-      split=document.getElementById('split'), panel=document.getElementById('panel');
-
+/* ═══════════ modelo ═══════════ */
 const ids=Object.keys(P);
 const parents=id=>(P[id]?.pa||[]).filter(x=>P[x]);
 const kids=id=>ids.filter(k=>(P[k].pa||[]).includes(id));
 
-/* ---- 1. generación ----
-   La única regla que importa: un hijo va exactamente una columna después de sus
-   padres. Eso no se resuelve contando desde un extremo.
+/* --- generación: hijo = padres+1, cónyuges juntos, hermanos juntos --- */
+const uf={}; ids.forEach(i=>uf[i]=i);
+const find=x=>uf[x]===x?x:(uf[x]=find(uf[x]));
+const join=(a,b)=>{const ra=find(a),rb=find(b); if(ra!==rb) uf[ra]=rb;};
+ids.forEach(id=>{const p=parents(id); for(let i=1;i<p.length;i++) join(p[0],p[i]);});
+ids.forEach(id=>{const c=kids(id);    for(let i=1;i<c.length;i++) join(c[0],c[i]);});
+const out={}; ids.forEach(i=>out[find(i)]=out[find(i)]||new Set());
+ids.forEach(id=>{const p=parents(id); if(!p.length)return;
+  const a=find(p[0]),b=find(id); if(a!==b) out[a].add(b);});
+const gg={}; Object.keys(out).forEach(k=>gg[k]=0);
+for(let it=0;it<80;it++){ let ch=false;
+  for(const k of Object.keys(out)) for(const h of out[k]) if(gg[h]<gg[k]+1){gg[h]=gg[k]+1;ch=true;}
+  for(const k of Object.keys(out)){ if(!out[k].size) continue;
+    const m=Math.min(...[...out[k]].map(h=>gg[h]))-1; if(m>gg[k]){gg[k]=m;ch=true;} }
+  if(!ch) break; }
+const gen={}; ids.forEach(i=>gen[i]=gg[find(i)]);
+const minG=Math.min(...ids.map(i=>gen[i])); ids.forEach(i=>gen[i]-=minG);
+const maxG=Math.max(...ids.map(i=>gen[i]));
 
-   Contando desde arriba, todo el que no tiene padres conocidos cae en la columna
-   cero, y ahí terminan juntos un siciliano de 1810 y un friulano de 1900.
-   Contando desde abajo es peor: todo el que no tiene hijos registrados cae en la
-   última columna, y las hermanas de Liliana quedaban al lado de Antonio, con
-   ochenta años de diferencia.
+/* --- núcleos familiares: una pareja (o un solo progenitor) y sus hijos ---
+   Es la unidad que el ojo reconoce, y la que permite dibujar la convención
+   genealógica de verdad: los padres unidos por una barra, un nudo en el medio,
+   y de ahí una bajada al bus del que cuelgan todos los hermanos. */
+const units=new Map();
+ids.forEach(c=>{ const p=parents(c).slice().sort(); if(!p.length) return;
+  const key=p.join('|');
+  if(!units.has(key)) units.set(key,{parents:p,children:[]});
+  units.get(key).children.push(c); });
+const unitOfParent={};                 // a qué núcleo pertenece cada progenitor
+units.forEach((u,k)=>u.parents.forEach(p=>(unitOfParent[p]=unitOfParent[p]||[]).push(k)));
 
-   Se resuelve relajando las dos restricciones a la vez hasta que dejan de
-   moverse: quien tiene padres se para detrás del más joven de ellos; quien no
-   los tiene, se para justo delante del mayor de sus hijos. */
-/* Falta una restricción que no es evidente: los dos padres de un mismo hijo
-   tienen que caer en la misma columna. Sin eso, Maia quedaba siete columnas
-   detrás de Federico —porque de ella conocemos dos generaciones de ancestros y
-   de él siete— y su hijo Antonio salía disparado al final del dibujo.
+/* ═══════════ layout ═══════════ */
+const CW=182, CH=60, GAPX=26, GAPY=118, PAIR=14;
+const yearOf=id=>{const m=P[id].d?.match(/\d{4}/);return m?+m[0]:9999;};
 
-   Se resuelve uniendo a los co-padres en un mismo grupo y calculando la
-   generación por grupo, no por persona. */
-const padre={};                                    // union-find
-const find=x=>padre[x]===x?x:(padre[x]=find(padre[x]));
-const une=(a,b)=>{ const ra=find(a),rb=find(b); if(ra!==rb) padre[ra]=rb; };
-ids.forEach(i=>padre[i]=i);
-ids.forEach(id=>{ const pa=parents(id); for(let i=1;i<pa.length;i++) une(pa[0],pa[i]); }); // cónyuges
-ids.forEach(id=>{ const ch=kids(id);  for(let i=1;i<ch.length;i++) une(ch[0],ch[i]); }); // hermanos
+/* Entidad de layout: una pareja ocupa un bloque; los solteros, uno simple. */
+const ent=[], entOf={};
+units.forEach((u,k)=>{ if(u.parents.length<2) return;
+  const e={id:'u:'+k,people:u.parents,gen:gen[u.parents[0]],key:k};
+  ent.push(e); u.parents.forEach(p=>entOf[p]=e); });
+ids.forEach(id=>{ if(entOf[id]) return;
+  const e={id:'p:'+id,people:[id],gen:gen[id]}; ent.push(e); entOf[id]=e; });
+const entW=e=>e.people.length*CW+(e.people.length-1)*PAIR;
 
-// aristas entre grupos: el grupo de los padres precede al grupo del hijo
-const salidas={}, entradas={};
-ids.forEach(i=>{ salidas[find(i)]=salidas[find(i)]||new Set(); entradas[find(i)]=entradas[find(i)]||new Set(); });
-ids.forEach(id=>{ const pa=parents(id); if(!pa.length) return;
-  const a=find(pa[0]), b=find(id);
-  if(a!==b){ salidas[a].add(b); entradas[b].add(a); } });
-
-/* Dos barridos hasta que dejen de moverse:
-   – hacia adelante, cada hijo se corre detrás del más tardío de sus padres;
-   – hacia atrás, cada padre se acerca hasta quedar justo delante del más
-     temprano de sus hijos.
-   Sin el segundo, un padre cuya rama tiene pocos ancestros conocidos queda dos
-   o tres columnas antes que su propio hijo: José María López terminaba seis
-   columnas detrás de su hija Maia. */
-const gGrupo={}; Object.keys(salidas).forEach(g=>gGrupo[g]=0);
-for(let it=0; it<80; it++){
-  let cambio=false;
-  for(const g of Object.keys(salidas))
-    for(const h of salidas[g])
-      if(gGrupo[h]<gGrupo[g]+1){ gGrupo[h]=gGrupo[g]+1; cambio=true; }
-  for(const g of Object.keys(salidas)){
-    if(!salidas[g].size) continue;
-    const m=Math.min(...[...salidas[g]].map(h=>gGrupo[h]))-1;
-    if(m>gGrupo[g]){ gGrupo[g]=m; cambio=true; }
-  }
-  if(!cambio) break;
-}
-const gen={};
-ids.forEach(i=>gen[i]=gGrupo[find(i)]);    // izquierda = más antiguo
-const maxGen=Math.max(...ids.map(i=>gen[i]));
-
-/* ---- 2. layout tidy de descendencia ----
-   Recorrido en profundidad por los HIJOS, no por los padres. Cada persona sin
-   descendencia toma la siguiente fila libre; cada padre se centra sobre sus hijos.
-   Es lo que hace que se lea de un vistazo quién desciende de quién: los hermanos
-   salen contiguos y el padre queda enfrentado al bloque de su descendencia.
-
-   (Un barrido de baricentro daría menos cruces de líneas pero rompe justamente
-   esa contigüidad, y el dibujo se vuelve ilegible. La legibilidad manda.) */
-const SLOT=CH+GAPY;
-const y={}, done=new Set();
-let cursor=PADY;
-const BRANCH={sicilia:0,friuli:1,arg:2};
-const yearOf=id=>Number((P[id].d.match(/\d{4}/)||[9999])[0]);
-const byBirth=(a,b)=>yearOf(a)-yearOf(b);
-
-function place(id){
-  if(done.has(id)) return y[id];
-  done.add(id);
-  const ch=kids(id).sort(byBirth);
-  if(!ch.length){ y[id]=cursor; cursor+=SLOT; return y[id]; }
-  const ys=ch.map(place);
-  y[id]=(Math.min(...ys)+Math.max(...ys))/2;   // centrado sobre su descendencia
-  return y[id];
-}
-
-// troncos: sin padres conocidos, agrupados por rama para que Sicilia, Friuli
-// y Argentina no queden intercalados
-ids.filter(i=>gen[i]===0)
-   .sort((a,b)=>(BRANCH[P[a].b]??9)-(BRANCH[P[b].b]??9)||byBirth(a,b))
-   .forEach(place);
-ids.forEach(id=>{ if(!done.has(id)) place(id); });   // por si quedó alguien suelto
-
-// La pareja que "entra" a la familia no tiene padres ni fila propia: se la sienta
-// junto a su cónyuge, que es donde el ojo la busca.
-ids.forEach(id=>{
-  if(parents(id).length) return;
-  const conyuges=new Set();
-  kids(id).forEach(k=>parents(k).forEach(p=>{ if(p!==id) conyuges.add(p); }));
-  const ref=[...conyuges].filter(c=>parents(c).length)[0];
-  if(ref!==undefined) y[id]=y[ref]+SLOT*0.9;
-});
-
-/* Desolapar dentro de cada columna.
-   Una sola pasada hacia abajo empuja en cascada y termina alejando a un padre
-   de sus hijos. Con ida y vuelta —empujar los que chocan, y después tirar hacia
-   arriba de los que quedaron con holgura— el desplazamiento total es mínimo y
-   cada quien se queda cerca de donde el árbol lo quería. */
-const porGen={};
-ids.forEach(i=>(porGen[gen[i]] ||= []).push(i));
-const desolapar=col=>{
-  col.sort((a,b)=>y[a]-y[b]);
-  for(let i=1;i<col.length;i++)
-    y[col[i]]=Math.max(y[col[i]], y[col[i-1]]+SLOT);
-  for(let i=col.length-2;i>=0;i--)
-    y[col[i]]=Math.min(y[col[i]], y[col[i+1]]-SLOT);
+// hijos de una entidad = entidades de todos los hijos de sus núcleos
+const childEnts=e=>{
+  const s=new Set();
+  e.people.forEach(p=>(unitOfParent[p]||[]).forEach(k=>
+    units.get(k).children.forEach(c=>s.add(entOf[c]))));
+  return [...s].sort((a,b)=>yearOf(a.people[0])-yearOf(b.people[0]));
 };
-Object.values(porGen).forEach(desolapar);
 
-/* Recentrar a los padres sobre sus hijos y volver a desolapar. Tres pasadas
-   alcanzan para que el dibujo se acomode; más no cambia nada. */
-for(let pass=0;pass<3;pass++){
-  for(let g=maxGen-1;g>=0;g--){
-    (porGen[g]||[]).forEach(id=>{
-      const ch=kids(id).filter(c=>y[c]!==undefined);
-      if(ch.length){
-        const ys=ch.map(c=>y[c]);
-        y[id]=(Math.min(...ys)+Math.max(...ys))/2;
-      }
-    });
-    desolapar(porGen[g]||[]);
-  }
+// recorrido en profundidad: cada entidad sin descendencia toma el siguiente hueco,
+// cada padre se centra sobre el bloque de sus hijos
+let cur=0; const cx={}, seen=new Set();
+function put(e){
+  if(seen.has(e.id)) return cx[e.id];
+  seen.add(e.id);
+  const ch=childEnts(e).filter(c=>c!==e);
+  if(!ch.length){ cx[e.id]=cur+entW(e)/2; cur+=entW(e)+GAPX; return cx[e.id]; }
+  const xs=ch.map(put);
+  cx[e.id]=(Math.min(...xs)+Math.max(...xs))/2;
+  return cx[e.id];
 }
-const minY=Math.min(...ids.map(i=>y[i]));
-ids.forEach(i=>y[i]=y[i]-minY+PADY);
+/* Cada rama, su propio territorio.
+   Ordenar los troncos sólo por región dejaba que el recorrido intercalara a los
+   Novello con los Fichera, porque ambas ramas confluyen en Federico y el primer
+   camino que llega se lleva a los descendientes comunes. Marcando de qué lado
+   viene cada persona —materno por Patricia, paterno por Aníbal— y recorriendo un
+   lado entero antes de empezar el otro, cada mitad queda de una pieza. */
+const lado={};
+// primero el tronco común: de Aníbal y Patricia para abajo nadie tiene "lado"
+(function comun(id){ if(lado[id]==='c') return; lado[id]='c';
+  kids(id).forEach(comun);
+  kids(id).forEach(c=>parents(c).forEach(p=>{ if(!lado[p]) lado[p]='c'; })); })('anibal');
+kids('patricia').forEach(c=>{ if(!lado[c]) lado[c]='c'; });
+delete lado['anibal'];
+// después cada rama hacia arriba
+(function sube(id,l){ if(!P[id]||lado[id]==='m'||lado[id]==='p') return;
+  lado[id]=l; parents(id).forEach(p=>sube(p,l)); })('patricia','m');
+(function sube(id,l){ if(!P[id]||lado[id]==='m'||lado[id]==='p') return;
+  lado[id]=l; parents(id).forEach(p=>sube(p,l)); })('anibal','p');
+// y los hermanos de cada antepasado heredan el lado de sus padres
+for(let i=0;i<10;i++) ids.forEach(id=>{
+  if(lado[id]) return;
+  const l=parents(id).map(p=>lado[p]).find(x=>x==='m'||x==='p');
+  if(l) lado[id]=l;
+});
+const LADO={m:0,c:1,p:2};                          // materno · común · paterno
+const ladoDe=e=>{ for(const p of e.people) if(LADO[lado[p]]!==undefined) return LADO[lado[p]];
+  return 3; };
 
-/* ---- 4. dibujar ---- */
-const GENNAME=['1.ª generación','2.ª generación','3.ª generación','4.ª generación','5.ª generación',
-               '6.ª generación','7.ª generación','8.ª generación','9.ª generación'];
-const W=PADX*2+(maxGen+1)*(CW+GAPX)-GAPX;
-const H=Math.max(...ids.map(i=>y[i]))+CH+PADY;
+const troncos=ent.filter(e=>e.gen===0)
+  .sort((a,b)=>ladoDe(a)-ladoDe(b)||yearOf(a.people[0])-yearOf(b.people[0]));
+troncos.forEach(put);
+ent.forEach(e=>{ if(!seen.has(e.id)) put(e); });
+
+// desolapar por fila, ida y vuelta, y recentrar padres sobre hijos
+const byGen={}; ent.forEach(e=>(byGen[e.gen]=byGen[e.gen]||[]).push(e));
+const spread=row=>{
+  row.sort((a,b)=>cx[a.id]-cx[b.id]);
+  for(let i=1;i<row.length;i++){
+    const need=cx[row[i-1].id]+entW(row[i-1])/2+GAPX+entW(row[i])/2;
+    if(cx[row[i].id]<need) cx[row[i].id]=need; }
+  for(let i=row.length-2;i>=0;i--){
+    const lim=cx[row[i+1].id]-entW(row[i+1])/2-GAPX-entW(row[i])/2;
+    if(cx[row[i].id]>lim) cx[row[i].id]=lim; }
+};
+Object.values(byGen).forEach(spread);
+for(let pass=0;pass<4;pass++){
+  for(let g=maxG-1;g>=0;g--){
+    (byGen[g]||[]).forEach(e=>{ const ch=childEnts(e).filter(c=>c!==e);
+      if(ch.length){ const xs=ch.map(c=>cx[c.id]); cx[e.id]=(Math.min(...xs)+Math.max(...xs))/2; } });
+    spread(byGen[g]||[]); }
+  for(let g=1;g<=maxG;g++){
+    (byGen[g]||[]).forEach(e=>{
+      const ps=new Set(); e.people.forEach(p=>parents(p).forEach(x=>ps.add(entOf[x])));
+      if(ps.size){ const xs=[...ps].map(x=>cx[x.id]); cx[e.id]=(Math.min(...xs)+Math.max(...xs))/2; } });
+    spread(byGen[g]||[]); }
+}
+
+// posición final de cada persona
+const X={}, Y={};
+ent.forEach(e=>{ const w=entW(e); let x=cx[e.id]-w/2;
+  e.people.forEach(p=>{ X[p]=x; Y[p]=e.gen*(CH+GAPY); x+=CW+PAIR; }); });
+const minX=Math.min(...ids.map(i=>X[i]));
+ids.forEach(i=>X[i]-=minX-40);
+const W=Math.max(...ids.map(i=>X[i]+CW))+40;
+const H=Math.max(...ids.map(i=>Y[i]+CH))+50;
+
+/* ═══════════ dibujo ═══════════ */
+const world=document.getElementById('world'), wires=document.getElementById('wires'),
+      people=document.getElementById('people'), bands=document.getElementById('bands');
+world.style.width=W+'px'; world.style.height=H+'px';
+wires.setAttribute('width',W); wires.setAttribute('height',H);
+
+const GNAME=['1.ª generación','2.ª generación','3.ª generación','4.ª generación',
+             '5.ª generación','6.ª generación','7.ª generación','8.ª generación','9.ª generación'];
+for(let g=0;g<=maxG;g++){
+  const gente=ids.filter(i=>gen[i]===g), ys=gente.map(yearOf).filter(y=>y<9999);
+  const d=document.createElement('div'); d.className='band';
+  d.style.cssText=`top:${g*(CH+GAPY)-34}px;width:${W}px;height:${CH+68}px`;
+  d.innerHTML=`<i></i><b>${GNAME[g]}<span>${ys.length?Math.min(...ys)+'–'+Math.max(...ys):''}</span></b>`;
+  bands.appendChild(d);
+}
+
 const NS='http://www.w3.org/2000/svg';
-const AXIS_H=42;
+const wire=(d,cls,dash)=>{const p=document.createElementNS(NS,'path');
+  p.setAttribute('d',d); p.setAttribute('fill','none');
+  p.setAttribute('stroke',cls); p.setAttribute('stroke-width','1.5');
+  p.setAttribute('stroke-linecap','round'); p.setAttribute('stroke-linejoin','round');
+  if(dash) p.setAttribute('stroke-dasharray',dash); wires.appendChild(p); return p;};
+const wiresOf={};   // qué trazos resaltar al elegir a alguien
 
-canvas.style.width=W+'px'; canvas.style.height=(H+AXIS_H)+'px';
-links.setAttribute('width',W); links.setAttribute('height',H+AXIS_H);
+units.forEach((u,k)=>{
+  const ps=u.parents, ch=u.children;
+  const hip=ch.some(c=>P[c].hyp), test=ch.some(c=>P[c].t)||ps.some(p=>P[p].t);
+  const color=hip?'var(--open)':'var(--line)';
+  const dash=hip?'2 5':(test?'5 4':null);
 
-for(let g=0;g<=maxGen;g++){
-  const yrs=(porGen[g]||[]).map(i=>(P[i].d.match(/\d{4}/)||[])[0]).filter(Boolean).map(Number);
-  const el=document.createElement('div'); el.style.width=(CW+GAPX)+'px';
-  el.innerHTML=`<b>${GENNAME[g]||('gen. '+(g+1))}</b><span>`+
-    (yrs.length?`${Math.min(...yrs)}–${Math.max(...yrs)}`:'')+`</span>`;
-  axis.appendChild(el);
-}
-
-const X=id=>PADX+gen[id]*(CW+GAPX);
-const edges=[];
-ids.forEach(id=>parents(id).forEach(par=>{
-  const x1=X(par)+CW, y1=y[par]+CH/2+AXIS_H, x2=X(id), y2=y[id]+CH/2+AXIS_H, mid=x1+GAPX/2;
-  const p=document.createElementNS(NS,'path');
-  p.setAttribute('d',`M${x1} ${y1} H${mid} V${y2} H${x2}`);
-  p.setAttribute('fill','none'); p.setAttribute('stroke-width','1.3');
-  if(P[id].hyp){
-    p.setAttribute('stroke','var(--open)'); p.setAttribute('stroke-dasharray','2 4');
-    const t=document.createElementNS(NS,'text');
-    t.setAttribute('x',mid+3); t.setAttribute('y',(y1+y2)/2-3);
-    t.setAttribute('fill','var(--open)'); t.setAttribute('font-size','9');
-    t.setAttribute('font-family','Source Sans 3,sans-serif'); t.textContent='HIPÓTESIS';
-    links.appendChild(t);
-  } else {
-    p.setAttribute('stroke','var(--line)');
-    if(P[id].t||P[par].t) p.setAttribute('stroke-dasharray','4 3');
+  // nudo de la pareja: en el medio de los dos, justo debajo de las cajas
+  const py=Y[ps[0]]+CH, nodeX=ps.length>1
+    ? (X[ps[0]]+CW/2+X[ps[ps.length-1]]+CW/2)/2 : X[ps[0]]+CW/2;
+  const trazos=[];
+  if(ps.length>1){
+    trazos.push(wire(`M${X[ps[0]]+CW/2} ${py-6} V${py+16} H${X[ps[1]]+CW/2} V${py-6}`,color,dash));
+    const c=document.createElementNS(NS,'circle');
+    c.setAttribute('cx',nodeX); c.setAttribute('cy',py+16); c.setAttribute('r',3.5);
+    c.setAttribute('fill',hip?'var(--open)':'var(--muted)');
+    wires.appendChild(c); trazos.push(c);
   }
-  p.dataset.a=par; p.dataset.b=id;
-  links.appendChild(p); edges.push(p);
-}));
-
-ids.forEach(id=>{
-  const p=P[id];
-  const b=document.createElement('button');
-  b.className='node'+(p.open?' op':'')+(p.hyp?' hyp':'')+(p.t&&!p.open&&!p.hyp?' test':'');
-  b.dataset.b=p.b; b.dataset.id=id;
-  b.style.cssText=`left:${X(id)}px;top:${y[id]+AXIS_H}px;width:${CW}px;min-height:${CH}px`;
-  b.innerHTML=`<span class="n">${p.n}</span><span class="d">${p.d}</span>`+
-    (p.open?'<span class="b open">frontera</span>':'')+
-    (p.dc?'<span class="b dc">dante causa</span>':'')+
-    (p.t&&!p.open?'<span class="b tt">testimonio</span>':'');
-  b.onclick=()=>open(id);
-  canvas.appendChild(b);
+  // bajada al bus de hermanos y subida a cada hijo
+  const busY=Y[ch[0]]-26, from=ps.length>1?py+16:py;
+  trazos.push(wire(`M${nodeX} ${from} V${busY}`,color,dash));
+  const xs=ch.map(c=>X[c]+CW/2);
+  if(ch.length>1) trazos.push(wire(`M${Math.min(...xs)} ${busY} H${Math.max(...xs)}`,color,dash));
+  ch.forEach(c=>{
+    const t=wire(`M${X[c]+CW/2} ${busY} V${Y[c]}`,
+      P[c].hyp?'var(--open)':color, P[c].hyp?'2 5':dash);
+    (wiresOf[c]=wiresOf[c]||[]).push(t);
+    if(P[c].hyp){
+      const tx=document.createElementNS(NS,'text');
+      tx.setAttribute('x',X[c]+CW/2+6); tx.setAttribute('y',busY+14);
+      tx.setAttribute('fill','var(--open)'); tx.setAttribute('font-size','9');
+      tx.setAttribute('font-family','Inter Tight,sans-serif'); tx.setAttribute('letter-spacing','.06em');
+      tx.textContent='HIPÓTESIS'; wires.appendChild(tx); (wiresOf[c]=wiresOf[c]||[]).push(tx);
+    }
+  });
+  ps.forEach(p=>(wiresOf[p]=wiresOf[p]||[]).push(...trazos));
+  ch.forEach(c=>(wiresOf[c]=wiresOf[c]||[]).push(...trazos));
 });
 
-/* ---- 5. ficha ---- */
+ids.forEach(id=>{
+  const p=P[id], b=document.createElement('button');
+  b.className='p'+(p.open?' open':'')+(p.t&&!p.open?' test':'');
+  b.dataset.b=p.b; b.dataset.id=id;
+  b.style.cssText=`left:${X[id]}px;top:${Y[id]}px;width:${CW}px;min-height:${CH}px`;
+  b.innerHTML=`<span class="nm">${p.n}</span><span class="yr">${p.d}</span>`+
+    (p.open?'<span class="tag f">frontera</span>':'')+
+    (p.dc?'<span class="tag dc">dante causa</span>':'')+
+    (p.t&&!p.open?'<span class="tag t">testimonio</span>':'');
+  b.onclick=e=>{e.stopPropagation();show(id);};
+  people.appendChild(b);
+});
+
+/* ═══════════ mover y acercar ═══════════ */
+const vp=document.getElementById('vp');
+let k=1,tx=0,ty=0;
+const apply=()=>world.style.transform=`translate(${tx}px,${ty}px) scale(${k})`;
+function fit(){
+  const r=vp.getBoundingClientRect();
+  k=Math.min(r.width/(W+80),r.height/(H+80),1);
+  tx=(r.width-W*k)/2; ty=24; apply();
+}
+vp.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=vp.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  const nk=Math.min(2.4,Math.max(.12,k*(e.deltaY<0?1.12:1/1.12)));
+  tx=mx-(mx-tx)*(nk/k); ty=my-(my-ty)*(nk/k); k=nk; apply();
+},{passive:false});
+let drag=null;
+vp.addEventListener('pointerdown',e=>{ if(e.target.closest('.p'))return;
+  drag={x:e.clientX,y:e.clientY,tx,ty}; vp.classList.add('drag'); vp.setPointerCapture(e.pointerId); });
+vp.addEventListener('pointermove',e=>{ if(!drag)return;
+  tx=drag.tx+e.clientX-drag.x; ty=drag.ty+e.clientY-drag.y; apply(); });
+const stop=()=>{drag=null;vp.classList.remove('drag');};
+vp.addEventListener('pointerup',stop); vp.addEventListener('pointercancel',stop);
+document.getElementById('zin').onclick=()=>{k=Math.min(2.4,k*1.25);apply();};
+document.getElementById('zout').onclick=()=>{k=Math.max(.12,k/1.25);apply();};
+document.getElementById('fit').onclick=fit;
+addEventListener('resize',()=>{ if(k<=.15) fit(); });
+
+function center(id){
+  const r=vp.getBoundingClientRect();
+  tx=r.width/2-(X[id]+CW/2)*k; ty=r.height/2-(Y[id]+CH/2)*k; apply();
+}
+
+/* ═══════════ ficha ═══════════ */
+const sheet=document.getElementById('sheet'), sheetIn=document.getElementById('sheetIn');
 function lineage(id){
-  const s=new Set([id]), up=[id], dn=[id];
-  while(up.length){ const c=up.pop(); parents(c).forEach(p=>{ if(!s.has(p)){s.add(p);up.push(p);} }); }
-  while(dn.length){ const c=dn.pop(); kids(c).forEach(k=>{ if(!s.has(k)){s.add(k);dn.push(k);} }); }
+  const s=new Set([id]); let q=[id];
+  while(q.length){const c=q.pop(); parents(c).forEach(p=>{if(!s.has(p)){s.add(p);q.push(p);}});}
+  q=[id];
+  while(q.length){const c=q.pop(); kids(c).forEach(x=>{if(!s.has(x)){s.add(x);q.push(x);}});}
   return s;
 }
-function open(id){
+function show(id){
   const p=P[id], fam=lineage(id);
-  document.querySelectorAll('.node').forEach(n=>{
-    n.classList.toggle('on',n.dataset.id===id);
-    n.classList.toggle('dim',!fam.has(n.dataset.id));
-  });
-  edges.forEach(e=>e.style.opacity=(fam.has(e.dataset.a)&&fam.has(e.dataset.b))?1:.12);
+  document.querySelectorAll('.p').forEach(n=>{
+    n.classList.toggle('sel',n.dataset.id===id);
+    n.classList.toggle('mute',!fam.has(n.dataset.id)); });
+  Object.entries(wiresOf).forEach(([who,ws])=>
+    ws.forEach(w=>w.style.opacity=fam.has(who)?1:.1));
 
-  const srcTag = p.hyp ? '<span class="src-tag src-hyp">vínculo hipotético</span>'
-               : p.t   ? '<span class="src-tag src-test">sólo por testimonio familiar</span>'
-               : p.c?.length ? '<span class="src-tag src-doc">documentado</span>' : '';
-  let h=`<h2>${p.n}</h2><div class="sub">${p.d}</div>${srcTag}`;
+  const stamp=p.hyp?'<span class="stamp st-hyp">vínculo hipotético</span>'
+    :p.t?'<span class="stamp st-test">sólo por testimonio familiar</span>'
+    :p.c?.length?'<span class="stamp st-doc">documentado</span>':'';
+  let h=`<h2>${p.n}</h2><div class="sub">${p.d}</div>${stamp}`;
   if(p.note) h+=`<div class="note">${p.note}</div>`;
-  if(p.f?.length){ h+='<div class="grp"><h3>Datos</h3>';
-    p.f.forEach(([k,v,w,ok])=>{ h+=`<div class="row"><div class="kk">${k}</div>`+
-      `<div class="vv">${v}${ok?'<span class="ok">aceptada</span>':''}</div>`+
-      (w?`<div class="why">${w}</div>`:'')+'</div>'; }); h+='</div>'; }
-  if(p.c?.length){ h+='<div class="grp"><h3>Fuentes</h3>';
+  if(p.f?.length){ h+='<div class="sec"><h3>Datos</h3>';
+    p.f.forEach(([kk,v,w,ok])=>h+=`<div class="r"><div class="k">${kk}</div>`+
+      `<div class="v">${v}${ok?'<span class="pick">aceptada</span>':''}</div>`+
+      (w?`<div class="why">${w}</div>`:'')+'</div>'); h+='</div>'; }
+  if(p.c?.length){ h+='<div class="sec"><h3>Fuentes</h3>';
     p.c.forEach(([c,q])=>h+=`<div class="cite">${c}${q?`<br><i>“${q}”</i>`:''}</div>`); h+='</div>'; }
-
-  const rel=[];
-  parents(id).forEach(x=>rel.push([x,'padre/madre']));
-  const sibs=new Set(); parents(id).forEach(x=>kids(x).forEach(s=>{if(s!==id)sibs.add(s);}));
-  [...sibs].forEach(x=>rel.push([x,'hermano/a']));
-  kids(id).forEach(x=>rel.push([x,'hijo/a']));
-  if(rel.length){ h+='<div class="grp"><h3>Familia</h3><div class="rel">';
-    rel.forEach(([k,r])=>h+=`<button data-go="${k}">${P[k].n} <span style="color:var(--faint)">· ${r}</span></button>`);
+  const kin=[];
+  parents(id).forEach(x=>kin.push([x,'padre/madre']));
+  const sib=new Set(); parents(id).forEach(x=>kids(x).forEach(s=>{if(s!==id)sib.add(s);}));
+  [...sib].sort((a,b)=>yearOf(a)-yearOf(b)).forEach(x=>kin.push([x,'hermano/a']));
+  const pareja=new Set(); kids(id).forEach(c=>parents(c).forEach(x=>{if(x!==id)pareja.add(x);}));
+  [...pareja].forEach(x=>kin.push([x,'pareja']));
+  kids(id).sort((a,b)=>yearOf(a)-yearOf(b)).forEach(x=>kin.push([x,'hijo/a']));
+  if(kin.length){ h+='<div class="sec"><h3>Familia</h3><div class="kin">';
+    kin.forEach(([x,r])=>h+=`<button data-go="${x}">${P[x].n} <small>· ${r}</small></button>`);
     h+='</div></div>'; }
-
-  document.getElementById('panelIn').innerHTML=h;
-  panel.hidden=false; split.classList.add('open');
-  panel.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
-    open(b.dataset.go);
-    document.querySelector(`.node[data-id="${b.dataset.go}"]`)
-      ?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
-  });
+  sheetIn.innerHTML=h; sheet.classList.add('on');
+  sheetIn.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{show(b.dataset.go);center(b.dataset.go);});
+  setTimeout(()=>{ if(k>.5) center(id); },30);
 }
-document.getElementById('close').onclick=()=>{
-  panel.hidden=true; split.classList.remove('open');
-  document.querySelectorAll('.node').forEach(n=>n.classList.remove('on','dim'));
-  edges.forEach(e=>e.style.opacity=1);
+document.getElementById('x').onclick=()=>{
+  sheet.classList.remove('on');
+  document.querySelectorAll('.p').forEach(n=>n.classList.remove('sel','mute'));
+  Object.values(wiresOf).forEach(ws=>ws.forEach(w=>w.style.opacity=1));
 };
-
-/* ---- 6. buscar ---- */
 document.getElementById('q').oninput=e=>{
-  const q=e.target.value.trim().toLowerCase();
-  document.querySelectorAll('.node').forEach(n=>{
-    const hit=!q||P[n.dataset.id].n.toLowerCase().includes(q);
-    n.classList.toggle('dim',!hit);
-  });
-  if(q){
-    const first=ids.find(i=>P[i].n.toLowerCase().includes(q));
-    if(first) document.querySelector(`.node[data-id="${first}"]`)
-      ?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
-  }
+  const s=e.target.value.trim().toLowerCase();
+  document.querySelectorAll('.p').forEach(n=>
+    n.classList.toggle('mute', !!s && !P[n.dataset.id].n.toLowerCase().includes(s)));
+  if(s){ const f=ids.find(i=>P[i].n.toLowerCase().includes(s)); if(f) center(f); }
 };
-
-const QS=[
-["Giovanni Novello: buscar donde no hay índices","Descartado en Latisana y en toda la provincia de Udine. Antenati corta en 1900 y FamilySearch en 1911, así que su nacimiento de ~1902 cae en un hueco que ningún archivo online cubre. La vía que no depende de índices es la lista di leva classe 1902 del Archivio di Stato di Udine, que llega hasta la clase 1944."],
-["Por qué la línea Fichera se frena en Rosario","No es falta de registros: es exceso de homónimos. Hay cinco Rosario Fichera en Acireale, cada uno casado con una María distinta, y cuatro nacidos en Giarre entre 1836 y 1844 con cuatro pares de padres diferentes. Al nuestro sólo lo distingue el apellido de su mujer, Bonaventura. La salida es el acta de nacimiento de Giovanni, Giarre 1869, que no está indexada."],
-["Pedir la partida de AGATA Fichera, no de Haydée","El nombre Agata viaja cuatro generaciones seguidas por la rama femenina: Agata Leonardi (~1818), Agata Castorina (~1873) y Haydée, que según el testimonio familiar fue bautizada Agata. Hay que pedir la partida a ese nombre, en Mar del Plata, ~1920-1930."],
-["Los hermanos de Liliana, en un solo documento","Ivonne, Vilma, Franca y Giorgio nacieron entre 1925 y 1945, de lleno en el hueco entre Antenati y FamilySearch. En vez de cinco partidas sueltas conviene pedir un stato di famiglia storico, que lista todo el hogar en una página. A Latisana y a San Giorgio di Nogaro: la familia se mudó entre 1929 y 1953."],
-["El acta de matrimonio Carlini × Fichera","El documento llave de la rama paterna: nombra a los cuatro abuelos y los dos lugares de nacimiento italianos. Mar del Plata, ~1945-1952. CARLINI no es apellido siciliano — se concentra en Marche, Umbría, Lazio, Emilia y Toscana — así que buscarlo en Catania fue buscar en la provincia equivocada."],
-["El libro de las familias de la Vía Galatea","En la biblioteca de un museo de Acireale hay un libro sobre las familias de la calle donde vivían los Fichera, casi con seguridad la Biblioteca Zelantea. Nadie lo consultó todavía; probablemente sea el mayor atajo de esta rama."],
-];
-const qs=document.getElementById('qs');
-QS.forEach(([t,b])=>{const d=document.createElement('div');d.className='card';
-  d.innerHTML=`<span class="pill">abierta</span><h3>${t}</h3><p>${b}</p>`;qs.appendChild(d);});
+fit();
 </script>
