@@ -9,7 +9,7 @@
 /* Los botones de raíz de la barra de arriba, en orden. Explícitos a propósito:
    antes la app los derivaba sola —la persona raíz más sus ancestros más cercanos— y
    terminaba mostrando gente que no tenía por qué estar ahí arriba. Se eligen a mano. */
-const RAICES = ['federico', 'anibal', 'patricia']
+const RAICES = ['federico', 'anibal', 'patricia', 'antonio']
 
 const LUGARES = [
   // Friuli
