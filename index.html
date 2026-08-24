@@ -66,7 +66,9 @@ input[type=search]{font:inherit;font-size:12.5px;padding:5px 11px;border:1px sol
   background-image:radial-gradient(var(--grid) 1px,transparent 1px);background-size:26px 26px}
 .vp.drag{cursor:grabbing}
 .world{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
-.colhead{position:absolute;top:0;font-size:10.5px;color:var(--faint);letter-spacing:.08em;white-space:nowrap;pointer-events:none;font-variant-numeric:tabular-nums}
+.colhead{position:absolute;top:0;white-space:nowrap;pointer-events:none}
+.colhead b{display:block;font-family:Fraunces,serif;font-size:12.5px;font-weight:500;color:var(--muted)}
+.colhead span{display:block;font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums;margin-top:1px}
 svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 
 .p{position:absolute;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line);
@@ -87,6 +89,22 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
   padding:1px 5px;border-radius:3px}
 .tag.f{background:var(--open-soft);color:var(--open);border:1px solid var(--open)}
 .tag.dc{background:var(--friuli-soft);color:var(--friuli)}
+.cert{display:inline-block;margin-left:5px;font-style:normal;font-size:10px;line-height:1;
+  width:13px;height:13px;border-radius:50%;text-align:center;vertical-align:1px;
+  background:var(--friuli-soft);color:var(--friuli);border:1px solid var(--friuli)}
+.shots{display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px}
+.shot{display:block;width:100%;border:1px solid var(--line);border-radius:8px;overflow:hidden;
+  background:var(--bg);cursor:zoom-in}
+.shot img{display:block;width:100%;height:110px;object-fit:cover;object-position:top}
+.shot figcaption{font-size:10.5px;line-height:1.45;color:var(--faint);padding:6px 8px}
+.lightbox{position:fixed;inset:0;background:rgba(10,12,11,.92);z-index:80;display:grid;
+  place-items:center;padding:24px;cursor:zoom-out}
+.lightbox img{max-width:100%;max-height:92vh;object-fit:contain;border-radius:6px}
+.srcurl{display:inline-block;margin-top:4px;font-size:11px;color:var(--arg);text-decoration:none;
+  border-bottom:1px solid currentColor}
+.nivel{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;font-size:11px;
+  color:var(--faint);background:color-mix(in srgb,var(--bg) 82%,transparent);
+  padding:4px 9px;border-radius:7px;z-index:20;font-variant-numeric:tabular-nums}
 
 /* hermanos: presentes pero discretos, para que no compitan con la línea principal */
 .sib{position:absolute;font-size:10px;line-height:1.5;color:var(--faint);cursor:pointer;
@@ -169,6 +187,7 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
       </div>
       <div class="zoom"><button id="zin">+</button><button id="zout">−</button></div>
       <div class="hint" id="hint"></div>
+      <div class="nivel" id="nivel">100%</div>
     </div>
     <aside class="sheet" id="sheet"><div class="sheet-in" id="sheetIn"></div>
       <button class="x" id="x" aria-label="Cerrar la ficha">× <span>cerrar</span></button></aside>
@@ -185,7 +204,12 @@ const hermanos=id=>{const s=new Set();
   pa(id).forEach(p=>kids(p).forEach(h=>{ if(h!==id) s.add(h); })); return [...s].sort((a,b)=>yearOf(a)-yearOf(b));};
 
 const CW=196, CH=60, GX=78, GY=22, SIB=15;
-const COLS=['','Padres','Abuelos','Bisabuelos','Tatarabuelos',
+/* Parentesco visto desde la raíz. Después de tatarabuelos el castellano se
+   queda sin palabras de uso corriente, así que se numeran. */
+const PARENTESCO=d=>['','Padres','Abuelos','Bisabuelos','Tatarabuelos',
+  'Trastatarabuelos','4.os abuelos','5.os abuelos','6.os abuelos','7.os abuelos'][d]
+  ?? (d+'.ª generación atrás');
+const COLS_VIEJO=['','Padres','Abuelos','Bisabuelos','Tatarabuelos',
             '3.os abuelos','4.os abuelos','5.os abuelos','6.os abuelos'];
 
 const world=document.getElementById('world'), wires=document.getElementById('wires'),
@@ -220,16 +244,16 @@ function build(){
   world.style.width=W+'px'; world.style.height=H+'px';
   wires.setAttribute('width',W); wires.setAttribute('height',H);
 
-  /* Sin encabezados de "generación": si las horquillas están bien dibujadas,
-     la estructura ya se lee sola y nombrar las columnas sólo agrega ruido.
-     Queda apenas el rango de años, en gris claro, como orientación. */
+  /* El encabezado dice el parentesco RESPECTO DE QUIEN MIRA: si el árbol
+     arranca en Antonio, la cuarta columna son sus bisabuelos; si arranca en
+     Federico, son sus abuelos. Es el dato que uno quiere y cambia con la raíz. */
   for(let d=0;d<=maxD;d++){
     const ys=dibujados.filter(i=>X[i]===40+d*(CW+GX)).map(yearOf).filter(y=>y<9999);
-    if(!ys.length) continue;
     const h=document.createElement('div'); h.className='colhead';
-    h.style.left=(40+d*(CW+GX))+'px'; h.style.top='16px';
-    const a=Math.min(...ys), b=Math.max(...ys);
-    h.textContent = a===b ? a : a+'–'+b;
+    h.style.left=(40+d*(CW+GX))+'px'; h.style.top='14px';
+    const a=ys.length?Math.min(...ys):null, b=ys.length?Math.max(...ys):null;
+    h.innerHTML=`<b>${PARENTESCO(d)}</b>`+
+      (ys.length?`<span>${a===b?a:a+'–'+b}</span>`:'');
     heads.appendChild(h);
   }
 
@@ -278,7 +302,8 @@ function build(){
     b.className='p'+(p.open?' open':'')+(p.t&&!p.open?' test':'');
     b.dataset.b=p.b; b.dataset.id=id;
     b.style.cssText=`left:${X[id]}px;top:${Y[id]}px;width:${CW}px;min-height:${CH}px`;
-    b.innerHTML=`<span class="nm">${p.n}</span><span class="yr">${p.d}</span>`+
+    const cert = p.c?.length && !p.t && !p.hyp;
+    b.innerHTML=`<span class="nm">${p.n}${cert?'<i class="cert" title="Respaldado por documentos">✓</i>':''}</span><span class="yr">${p.d}</span>`+
       (p.open?'<span class="tag f">frontera</span>':'')+
       (p.dc?'<span class="tag dc">dante causa</span>':'');
     b.onclick=e=>{e.stopPropagation();show(id);};
@@ -301,29 +326,90 @@ function build(){
 }
 
 /* ── mover y acercar ── */
-let k=1,tx=0,ty=0;
-const apply=()=>world.style.transform=`translate(${tx}px,${ty}px) scale(${k})`;
+/* ── navegación ────────────────────────────────────────────────
+   La rueda hacía zoom siempre, y eso pelea con el gesto que la mano ya tiene:
+   en un trackpad, deslizar dos dedos es desplazarse. Ahora la rueda desplaza y
+   el zoom se pide — con pinza, con Ctrl, o con los botones. Nadie vuelve a
+   perder el árbol de vista por arrimar dos dedos.                            */
+const K_MIN=.15, K_MAX=2.8;
+let k=1,tx=0,ty=0, kObj=1,txObj=0,tyObj=0, anim=null;
+const pinta=()=>world.style.transform=`translate(${tx}px,${ty}px) scale(${k})`;
+const nivel=document.getElementById('nivel');
+function pinta2(){ pinta(); if(nivel) nivel.textContent=Math.round(k*100)+'%'; }
+
+/* Todo movimiento pasa por acá: se fija un destino y una animación corta lo
+   alcanza. Sin esto, cada zoom es un salto y uno pierde el hilo de dónde está. */
+function hacia(nk,ntx,nty,suave=true){
+  kObj=Math.min(K_MAX,Math.max(K_MIN,nk)); txObj=ntx; tyObj=nty;
+  if(!suave){ k=kObj; tx=txObj; ty=tyObj; pinta2(); return; }
+  if(anim) return;
+  const paso=()=>{
+    k+=(kObj-k)*.28; tx+=(txObj-tx)*.28; ty+=(tyObj-ty)*.28;
+    pinta2();
+    if(Math.abs(kObj-k)>.001||Math.abs(txObj-tx)>.5||Math.abs(tyObj-ty)>.5)
+      anim=requestAnimationFrame(paso);
+    else { k=kObj; tx=txObj; ty=tyObj; pinta2(); anim=null; }
+  };
+  anim=requestAnimationFrame(paso);
+}
+function zoomEn(nk,mx,my,suave=true){
+  nk=Math.min(K_MAX,Math.max(K_MIN,nk));
+  hacia(nk, mx-(mx-txObj)*(nk/kObj), my-(my-tyObj)*(nk/kObj), suave);
+}
 function fit(){
   const r=vp.getBoundingClientRect();
   const W=parseFloat(world.style.width), H=parseFloat(world.style.height);
-  k=Math.min(r.width/(W+40),r.height/(H+40),1.15);
-  tx=(r.width-W*k)/2; ty=(r.height-H*k)/2; apply();
+  const nk=Math.min((r.width-60)/W,(r.height-60)/H,1.15);
+  hacia(nk,(r.width-W*nk)/2,(r.height-H*nk)/2,false);
 }
-vp.addEventListener('wheel',e=>{e.preventDefault();
-  const r=vp.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
-  const nk=Math.min(2.6,Math.max(.12,k*(e.deltaY<0?1.12:1/1.12)));
-  tx=mx-(mx-tx)*(nk/k); ty=my-(my-ty)*(nk/k); k=nk; apply();},{passive:false});
+function centrarEn(id,nk){
+  if(X[id]===undefined) return;
+  const r=vp.getBoundingClientRect(); const z=nk??Math.max(kObj,.75);
+  hacia(z, r.width/2-(X[id]+CW/2)*z, r.height/2-(Y[id]+CH/2)*z);
+}
+
+vp.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=vp.getBoundingClientRect();
+  if(e.ctrlKey||e.metaKey){                       // pinza del trackpad o Ctrl+rueda
+    zoomEn(kObj*Math.exp(-e.deltaY*0.01), e.clientX-r.left, e.clientY-r.top, false);
+  }else{                                          // rueda y trackpad: desplazar
+    hacia(kObj, txObj-e.deltaX, tyObj-e.deltaY, false);
+  }
+},{passive:false});
+
 let drag=null, movio=false;
 vp.addEventListener('pointerdown',e=>{ if(e.target.closest('.p,.sib'))return;
-  drag={x:e.clientX,y:e.clientY,tx,ty}; movio=false; vp.classList.add('drag'); vp.setPointerCapture(e.pointerId);});
+  if(anim){cancelAnimationFrame(anim);anim=null;} kObj=k;txObj=tx;tyObj=ty;
+  drag={x:e.clientX,y:e.clientY,tx,ty}; movio=false;
+  vp.classList.add('drag'); vp.setPointerCapture(e.pointerId);});
 vp.addEventListener('pointermove',e=>{ if(!drag)return;
   if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>4) movio=true;
-  tx=drag.tx+e.clientX-drag.x; ty=drag.ty+e.clientY-drag.y; apply();});
+  tx=txObj=drag.tx+e.clientX-drag.x; ty=tyObj=drag.ty+e.clientY-drag.y; pinta2();});
 const stop=()=>{drag=null;vp.classList.remove('drag');};
 vp.addEventListener('pointerup',stop); vp.addEventListener('pointercancel',stop);
-document.getElementById('zin').onclick=()=>{k=Math.min(2.6,k*1.25);apply();};
-document.getElementById('zout').onclick=()=>{k=Math.max(.12,k/1.25);apply();};
+vp.addEventListener('dblclick',e=>{ const c=e.target.closest('.p');
+  const r=vp.getBoundingClientRect();
+  if(c) centrarEn(c.dataset.id,1.3); else zoomEn(kObj*1.5,e.clientX-r.left,e.clientY-r.top); });
+
+document.getElementById('zin').onclick=()=>{const r=vp.getBoundingClientRect();
+  zoomEn(kObj*1.3,r.width/2,r.height/2);};
+document.getElementById('zout').onclick=()=>{const r=vp.getBoundingClientRect();
+  zoomEn(kObj/1.3,r.width/2,r.height/2);};
 document.getElementById('fit').onclick=fit;
+
+addEventListener('keydown',e=>{
+  if(e.target.matches('input,textarea')) return;
+  const P_=90, r=vp.getBoundingClientRect();
+  if(e.key==='ArrowLeft'){ hacia(kObj,txObj+P_,tyObj); e.preventDefault(); }
+  else if(e.key==='ArrowRight'){ hacia(kObj,txObj-P_,tyObj); e.preventDefault(); }
+  else if(e.key==='ArrowUp'){ hacia(kObj,txObj,tyObj+P_); e.preventDefault(); }
+  else if(e.key==='ArrowDown'){ hacia(kObj,txObj,tyObj-P_); e.preventDefault(); }
+  else if(e.key==='+'||e.key==='='){ zoomEn(kObj*1.3,r.width/2,r.height/2); }
+  else if(e.key==='-'||e.key==='_'){ zoomEn(kObj/1.3,r.width/2,r.height/2); }
+  else if(e.key==='0'){ fit(); }
+});
+addEventListener('resize',()=>{ if(kObj<=.2) fit(); });
 
 /* ── ficha ── */
 const sheet=document.getElementById('sheet'), sheetIn=document.getElementById('sheetIn');
@@ -343,7 +429,9 @@ function show(id){
   const stamp=p.hyp?'<span class="stamp st-hyp">vínculo hipotético</span>'
     :p.t?'<span class="stamp st-test">sólo por testimonio familiar</span>'
     :p.c?.length?'<span class="stamp st-doc">documentado</span>':'';
-  let h=`<h2>${p.n}</h2><div class="sub">${p.d}</div>${stamp}`;
+  const col = X[id]!==undefined ? Math.round((X[id]-40)/(CW+GX)) : null;
+  const rel = col===0 ? '' : col>0 ? ' · ' + PARENTESCO(col).replace(/s$/,'').toLowerCase() + ' de ' + P[root].n.split(' ')[0] : '';
+  let h=`<h2>${p.n}</h2><div class="sub">${p.d}${rel}</div>${stamp}`;
   if(!dibujados.includes(id))
     h+=`<button class="reroot" data-root="${id}">Ver la ascendencia de ${p.n.split(' ')[0]}</button>`;
   if(p.note) h+=`<div class="note">${p.note}</div>`;
@@ -352,7 +440,12 @@ function show(id){
       `<div class="v">${v}${ok?'<span class="pick">aceptada</span>':''}</div>`+
       (w?`<div class="why">${w}</div>`:'')+'</div>'); h+='</div>'; }
   if(p.c?.length){ h+='<div class="sec"><h3>Fuentes</h3>';
-    p.c.forEach(([c,q2])=>h+=`<div class="cite">${c}${q2?`<br><i>“${q2}”</i>`:''}</div>`); h+='</div>'; }
+    p.c.forEach(([c,q2])=>h+=`<div class="cite">${c}${q2?`<br><i>“${q2}”</i>`:''}</div>`);
+    if(p.url) h+=`<a class="srcurl" href="${p.url}" target="_blank" rel="noopener">Ver el registro original ↗</a>`;
+    h+='</div>'; }
+  if(p.img?.length){ h+='<div class="sec"><h3>Del registro</h3><div class="shots">';
+    p.img.forEach(([src,cap])=>h+=`<figure class="shot" data-full="${src}"><img src="${src}" alt="${cap}" loading="lazy"><figcaption>${cap}</figcaption></figure>`);
+    h+='</div></div>'; }
   const kin=[];
   pa(id).forEach(x=>kin.push([x,'padre/madre']));
   hermanos(id).forEach(x=>kin.push([x,'hermano/a']));
@@ -364,6 +457,12 @@ function show(id){
     h+='</div></div>'; }
   sheetIn.innerHTML=h; sheet.classList.add('on');
   sheetIn.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
+  sheetIn.querySelectorAll('.shot').forEach(f=>f.onclick=()=>{
+    const lb=document.createElement('div'); lb.className='lightbox';
+    lb.innerHTML='<img src="'+f.dataset.full+'" alt="">';
+    lb.onclick=()=>lb.remove();
+    addEventListener('keydown',function esc(ev){ if(ev.key==='Escape'){lb.remove();removeEventListener('keydown',esc);} });
+    document.body.appendChild(lb); });
   sheetIn.querySelectorAll('[data-root]').forEach(b=>b.onclick=()=>{
     root=b.dataset.root; syncRoots(); build(); show(root);});
 }
