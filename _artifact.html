@@ -66,10 +66,7 @@ input[type=search]{font:inherit;font-size:12.5px;padding:5px 11px;border:1px sol
   background-image:radial-gradient(var(--grid) 1px,transparent 1px);background-size:26px 26px}
 .vp.drag{cursor:grabbing}
 .world{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
-.colhead{position:absolute;top:0;font-family:Fraunces,serif;font-size:13px;color:var(--muted);
-  white-space:nowrap;pointer-events:none}
-.colhead span{display:block;font-family:"Inter Tight",sans-serif;font-size:10.5px;color:var(--faint);
-  font-variant-numeric:tabular-nums;margin-top:2px}
+.colhead{position:absolute;top:0;font-size:10.5px;color:var(--faint);letter-spacing:.08em;white-space:nowrap;pointer-events:none;font-variant-numeric:tabular-nums}
 svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 
 .p{position:absolute;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line);
@@ -107,8 +104,7 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 @media (max-width:820px){ .sheet-in{width:100%} }
 .sheet h2{font-family:Fraunces,serif;font-size:21px;font-weight:500;line-height:1.15;margin:0;padding-right:36px}
 .sheet .sub{color:var(--muted);font-size:12.5px;margin-top:3px;font-variant-numeric:tabular-nums}
-.x{position:absolute;top:12px;right:14px;border:1px solid var(--line);background:var(--card);
-  border-radius:9px;width:28px;height:28px;cursor:pointer;color:var(--muted);z-index:2}
+.x{position:absolute;top:12px;right:14px;border:1px solid var(--line);background:var(--card);border-radius:9px;height:28px;padding:0 10px;cursor:pointer;color:var(--muted);z-index:2;font-size:12px;display:flex;align-items:center;gap:5px;box-shadow:var(--lift)}
 .stamp{display:inline-block;margin-top:10px;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
   padding:2px 8px;border-radius:4px}
 .st-doc{background:var(--friuli-soft);color:var(--friuli)}
@@ -175,7 +171,7 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
       <div class="hint" id="hint"></div>
     </div>
     <aside class="sheet" id="sheet"><div class="sheet-in" id="sheetIn"></div>
-      <button class="x" id="x" aria-label="Cerrar">×</button></aside>
+      <button class="x" id="x" aria-label="Cerrar la ficha">× <span>cerrar</span></button></aside>
   </div>
 </div>
 
@@ -446,37 +442,57 @@ function build(){
   world.style.width=W+'px'; world.style.height=H+'px';
   wires.setAttribute('width',W); wires.setAttribute('height',H);
 
+  /* Sin encabezados de "generación": si las horquillas están bien dibujadas,
+     la estructura ya se lee sola y nombrar las columnas sólo agrega ruido.
+     Queda apenas el rango de años, en gris claro, como orientación. */
   for(let d=0;d<=maxD;d++){
-    const gente=dibujados.filter(i=>X[i]===40+d*(CW+GX));
-    const ys=gente.map(yearOf).filter(y=>y<9999);
+    const ys=dibujados.filter(i=>X[i]===40+d*(CW+GX)).map(yearOf).filter(y=>y<9999);
+    if(!ys.length) continue;
     const h=document.createElement('div'); h.className='colhead';
-    h.style.left=(40+d*(CW+GX))+'px'; h.style.top='14px';
-    h.innerHTML=(d===0?P[root].n:COLS[d]||(d+'.ª generación'))+
-      `<span>${ys.length?Math.min(...ys)+'–'+Math.max(...ys):''}</span>`;
+    h.style.left=(40+d*(CW+GX))+'px'; h.style.top='16px';
+    const a=Math.min(...ys), b=Math.max(...ys);
+    h.textContent = a===b ? a : a+'–'+b;
     heads.appendChild(h);
   }
 
+  /* La horquilla: un solo trazo del hijo al punto de bifurcación, la barra
+     vertical que abarca a padre y madre, y de ahí un tramo corto a cada uno.
+     Dibujado así se lee como UNA bifurcación, y no como dos líneas sueltas
+     que casualmente se superponen. El punto en el vértice remata la unión. */
   const NS='http://www.w3.org/2000/svg';
+  const traza=(d,color,dash,a,b)=>{
+    const p=document.createElementNS(NS,'path');
+    p.setAttribute('d',d); p.setAttribute('fill','none');
+    p.setAttribute('stroke',color); p.setAttribute('stroke-width','1.6');
+    p.setAttribute('stroke-linecap','round'); p.setAttribute('stroke-linejoin','round');
+    if(dash) p.setAttribute('stroke-dasharray',dash);
+    p.dataset.a=a; p.dataset.b=b; wires.appendChild(p); return p;
+  };
   dibujados.forEach(id=>{
     const ps=pa(id).filter(p=>X[p]!==undefined); if(!ps.length) return;
-    const x1=X[id]+CW, y1=Y[id]+CH/2, mid=x1+GX/2;
+    const x1=X[id]+CW, y1=Y[id]+CH/2, mid=x1+GX*0.45;
+    const hip=P[id].hyp;
+    const color=hip?'var(--open)':'var(--line)';
+    const dash=hip?'2 5':null;
+
+    traza(`M${x1} ${y1} H${mid}`,color,dash,id,ps[0]);          // sale del hijo
+    const ys=ps.map(p=>Y[p]+CH/2);
+    if(ps.length>1) traza(`M${mid} ${Math.min(...ys)} V${Math.max(...ys)}`,color,dash,id,ps[0]);
     ps.forEach(p=>{
-      const y2=Y[p]+CH/2, hip=P[id].hyp, tst=P[id].t||P[p].t;
-      const path=document.createElementNS(NS,'path');
-      path.setAttribute('d',`M${x1} ${y1} H${mid} V${y2} H${X[p]}`);
-      path.setAttribute('fill','none'); path.setAttribute('stroke-width','1.5');
-      path.setAttribute('stroke-linejoin','round');
-      path.setAttribute('stroke',hip?'var(--open)':'var(--line)');
-      if(hip) path.setAttribute('stroke-dasharray','2 5');
-      else if(tst) path.setAttribute('stroke-dasharray','5 4');
-      path.dataset.a=id; path.dataset.b=p;
-      wires.appendChild(path);
-      if(hip){ const t=document.createElementNS(NS,'text');
-        t.setAttribute('x',mid+5); t.setAttribute('y',(y1+y2)/2-4);
-        t.setAttribute('fill','var(--open)'); t.setAttribute('font-size','9');
-        t.setAttribute('font-family','Inter Tight,sans-serif'); t.textContent='HIPÓTESIS';
-        t.dataset.a=id; t.dataset.b=p; wires.appendChild(t); }
+      const tst=!hip&&(P[id].t||P[p].t);
+      traza(`M${mid} ${Y[p]+CH/2} H${X[p]}`,color,tst?'var(--line)':color,null,id,p)
+        .setAttribute('stroke-dasharray',hip?'2 5':(tst?'5 4':'none'));
     });
+    const dot=document.createElementNS(NS,'circle');
+    dot.setAttribute('cx',mid); dot.setAttribute('cy',y1); dot.setAttribute('r','2.6');
+    dot.setAttribute('fill',hip?'var(--open)':'var(--muted)');
+    dot.dataset.a=id; dot.dataset.b=ps[0]; wires.appendChild(dot);
+
+    if(hip){ const t=document.createElementNS(NS,'text');
+      t.setAttribute('x',mid+6); t.setAttribute('y',y1-6);
+      t.setAttribute('fill','var(--open)'); t.setAttribute('font-size','9');
+      t.setAttribute('font-family','Inter Tight,sans-serif'); t.textContent='HIPÓTESIS';
+      t.dataset.a=id; t.dataset.b=ps[0]; wires.appendChild(t); }
   });
 
   dibujados.forEach(id=>{
@@ -519,10 +535,11 @@ vp.addEventListener('wheel',e=>{e.preventDefault();
   const r=vp.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
   const nk=Math.min(2.6,Math.max(.12,k*(e.deltaY<0?1.12:1/1.12)));
   tx=mx-(mx-tx)*(nk/k); ty=my-(my-ty)*(nk/k); k=nk; apply();},{passive:false});
-let drag=null;
+let drag=null, movio=false;
 vp.addEventListener('pointerdown',e=>{ if(e.target.closest('.p,.sib'))return;
-  drag={x:e.clientX,y:e.clientY,tx,ty}; vp.classList.add('drag'); vp.setPointerCapture(e.pointerId);});
+  drag={x:e.clientX,y:e.clientY,tx,ty}; movio=false; vp.classList.add('drag'); vp.setPointerCapture(e.pointerId);});
 vp.addEventListener('pointermove',e=>{ if(!drag)return;
+  if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>4) movio=true;
   tx=drag.tx+e.clientX-drag.x; ty=drag.ty+e.clientY-drag.y; apply();});
 const stop=()=>{drag=null;vp.classList.remove('drag');};
 vp.addEventListener('pointerup',stop); vp.addEventListener('pointercancel',stop);
@@ -541,7 +558,7 @@ function show(id){
   document.querySelectorAll('.p,.sib').forEach(n=>{
     n.classList.toggle('sel',n.classList.contains('p')&&n.dataset.id===id);
     n.classList.toggle('mute',!linea.has(n.dataset.id));});
-  wires.querySelectorAll('path,text').forEach(w=>
+  wires.querySelectorAll('path,text,circle').forEach(w=>
     w.style.opacity=(linea.has(w.dataset.a)&&linea.has(w.dataset.b))?1:.12);
 
   const p=P[id];
@@ -572,11 +589,15 @@ function show(id){
   sheetIn.querySelectorAll('[data-root]').forEach(b=>b.onclick=()=>{
     root=b.dataset.root; syncRoots(); build(); show(root);});
 }
-document.getElementById('x').onclick=()=>{
+function cerrar(){
   sheet.classList.remove('on'); sel=null;
   document.querySelectorAll('.p,.sib').forEach(n=>n.classList.remove('sel','mute'));
-  wires.querySelectorAll('path,text').forEach(w=>w.style.opacity=1);
-};
+  wires.querySelectorAll('path,text,circle').forEach(w=>w.style.opacity=1);
+}
+document.getElementById('x').onclick=cerrar;
+addEventListener('keydown',e=>{ if(e.key==='Escape') cerrar(); });
+// clic en el vacío cierra la ficha; arrastrar, no
+vp.addEventListener('pointerup',e=>{ if(!e.target.closest('.p,.sib') && !movio) cerrar(); });
 function syncRoots(){ document.querySelectorAll('#roots button').forEach(b=>
   b.setAttribute('aria-pressed',String(b.dataset.r===root))); }
 document.querySelectorAll('#roots button').forEach(b=>b.onclick=()=>{
