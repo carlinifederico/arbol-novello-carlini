@@ -69,6 +69,9 @@ input[type=search]{font:inherit;font-size:12.5px;padding:5px 11px;border:1px sol
 .colhead{position:absolute;top:0;white-space:nowrap;pointer-events:none}
 .colhead b{display:block;font-family:Fraunces,serif;font-size:12.5px;font-weight:500;color:var(--muted)}
 .colhead span{display:block;font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums;margin-top:1px}
+.rotulo-suelto{position:absolute;white-space:nowrap;pointer-events:none;font-size:10.5px;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--open);
+  border:1px dashed var(--open);border-radius:999px;padding:2px 9px;background:var(--bg)}
 svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 
 .p{position:absolute;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line);
@@ -234,6 +237,34 @@ const yearOf=id=>{const m=P[id].d?.match(/\d{4}/);return m?+m[0]:9999;};
 const hermanos=id=>{const s=new Set();
   pa(id).forEach(p=>kids(p).forEach(h=>{ if(h!==id) s.add(h); })); return [...s].sort((a,b)=>yearOf(a)-yearOf(b));};
 
+/* ── Generación de cada persona, para poder ubicar las ramas sueltas ──
+   Hay un grupo —los Cagnolin de Corfú— del que no sale ningún acta que lo ate
+   al resto del árbol. Colgarlo de una línea inventada sería peor que dejarlo
+   afuera; pero dejarlo sin dibujar es esconder el hallazgo más viejo que hay.
+   Así que se dibuja aparte, en la columna que le corresponde por generación.
+   Tres reglas simultáneas: el hijo va una generación después de sus padres,
+   los dos padres comparten generación, y los hermanos también. */
+const GEN=(()=>{
+  const uf={}; ids.forEach(i=>uf[i]=i);
+  const find=x=>uf[x]===x?x:(uf[x]=find(uf[x]));
+  const une=(a,b)=>{const ra=find(a),rb=find(b); if(ra!==rb) uf[ra]=rb;};
+  ids.forEach(id=>{const p=pa(id); for(let i=1;i<p.length;i++) une(p[0],p[i]);});
+  ids.forEach(id=>{const c=kids(id); for(let i=1;i<c.length;i++) une(c[0],c[i]);});
+  const out={}; ids.forEach(i=>out[find(i)]??=new Set());
+  ids.forEach(id=>{const p=pa(id); if(!p.length) return;
+    const a=find(p[0]), b=find(id); if(a!==b) out[a].add(b);});
+  const g={}; Object.keys(out).forEach(k=>g[k]=0);
+  for(let it=0; it<80; it++){
+    let movio=false;
+    for(const k of Object.keys(out)) for(const h of out[k]) if(g[h]<g[k]+1){g[h]=g[k]+1; movio=true;}
+    for(const k of Object.keys(out)){ if(!out[k].size) continue;
+      const m=Math.min(...[...out[k]].map(h=>g[h]))-1;
+      if(m>g[k]){g[k]=m; movio=true;} }
+    if(!movio) break;
+  }
+  const gen={}; ids.forEach(i=>gen[i]=g[find(i)]); return gen;
+})();
+
 const CW=196, CH=60, GX=78, GY=22, SIB=15;
 /* Parentesco visto desde la raíz. Después de tatarabuelos el castellano se
    queda sin palabras de uso corriente, así que se numeran. */
@@ -256,7 +287,7 @@ function build(){
   // alto de la caja = la persona más sus hermanos en chiquito debajo
   const altoDe=id=>CH+(hermanos(id).length?hermanos(id).length*SIB+6:0);
 
-  (function poner(id,d){
+  function poner(id,d){
     if(!P[id]||puestos.has(id)) return Y[id];
     puestos.add(id); maxD=Math.max(maxD,d);
     const ps=pa(id);
@@ -268,7 +299,29 @@ function build(){
     }
     X[id]=40+d*(CW+GX); alto[id]=altoDe(id); dibujados.push(id);
     return Y[id];
-  })(root,0);
+  }
+  poner(root,0);
+
+  /* Lo que quedó sin dibujar: ramas que no cuelgan de la raíz. Se ubican en la
+     columna que les toca por generación, debajo del árbol principal y con su
+     propio rótulo, para que se vea que están y que todavía no están atadas. */
+  const sueltos=new Set();
+  for(let vuelta=0; vuelta<6; vuelta++){
+    const faltan=ids.filter(i=>!puestos.has(i));
+    if(!faltan.length) break;
+    // el más reciente de los que faltan encabeza el bloque
+    const cabeza=faltan.reduce((a,b)=>GEN[b]>GEN[a]?b:a);
+    const d=GEN[root]-GEN[cabeza];
+    if(d<0) break;
+    cursor+=34;                       // aire entre el árbol y la rama suelta
+    const tope=cursor;
+    poner(cabeza,d);
+    ids.forEach(i=>{ if(puestos.has(i)&&Y[i]>=tope-34) sueltos.add(i); });
+    const r=document.createElement('div'); r.className='rotulo-suelto';
+    r.style.left='40px'; r.style.top=(tope-26)+'px';
+    r.textContent='rama sin conectar todavía — ningún acta la ata al resto';
+    heads.appendChild(r);
+  }
 
   const W=40+(maxD+1)*(CW+GX)+40;
   const H=Math.max(...dibujados.map(i=>Y[i]+alto[i]))+50;
@@ -279,7 +332,9 @@ function build(){
      arranca en Antonio, la cuarta columna son sus bisabuelos; si arranca en
      Federico, son sus abuelos. Es el dato que uno quiere y cambia con la raíz. */
   for(let d=0;d<=maxD;d++){
-    const ys=dibujados.filter(i=>X[i]===40+d*(CW+GX)).map(yearOf).filter(y=>y<9999);
+    // los años de la columna cuentan sólo a los que sí cuelgan de la raíz:
+    // decir que un Cagnolin de Corfú es tatarabuelo de Antonio sería mentir
+    const ys=dibujados.filter(i=>X[i]===40+d*(CW+GX)&&!sueltos.has(i)).map(yearOf).filter(y=>y<9999);
     const h=document.createElement('div'); h.className='colhead';
     h.style.left=(40+d*(CW+GX))+'px'; h.style.top='14px';
     const a=ys.length?Math.min(...ys):null, b=ys.length?Math.max(...ys):null;
