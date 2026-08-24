@@ -184,19 +184,27 @@ const ids=Object.keys(P);
 const parents=id=>(P[id]?.pa||[]).filter(x=>P[x]);
 const kids=id=>ids.filter(k=>(P[k].pa||[]).includes(id));
 
-/* ---- 1. generación: camino más largo desde un tronco sin padres conocidos ---- */
-const gen={}, guard=new Set();
-function genOf(id){
-  if(gen[id]!==undefined) return gen[id];
+/* ---- 1. generación, medida DESDE EL PRESENTE ----
+   Contar desde arriba manda a la columna 0 a todo el que no tiene padres
+   conocidos, y ahí terminan mezclados un siciliano de 1810 con un friulano de
+   1900 sólo porque de los dos ignoramos a sus padres. Midiendo la distancia a
+   la generación más joven, cada quien cae en la columna que le corresponde por
+   dónde está parado en la familia, que es lo que uno espera leer. */
+const depth={}, guard=new Set();
+function depthOf(id){
+  if(depth[id]!==undefined) return depth[id];
   if(guard.has(id)) return 0;          // corta cualquier ciclo accidental
   guard.add(id);
-  const pa=parents(id);
-  gen[id]=pa.length?Math.max(...pa.map(genOf))+1:0;
+  const ch=kids(id);
+  depth[id]=ch.length?Math.max(...ch.map(depthOf))+1:0;
   guard.delete(id);
-  return gen[id];
+  return depth[id];
 }
-ids.forEach(genOf);
-const maxGen=Math.max(...ids.map(i=>gen[i]));
+ids.forEach(depthOf);
+const maxDepth=Math.max(...ids.map(i=>depth[i]));
+const gen={};
+ids.forEach(i=>gen[i]=maxDepth-depth[i]);   // izquierda = más antiguo
+const maxGen=maxDepth;
 
 /* ---- 2. layout tidy de descendencia ----
    Recorrido en profundidad por los HIJOS, no por los padres. Cada persona sin
@@ -274,7 +282,7 @@ const minY=Math.min(...ids.map(i=>y[i]));
 ids.forEach(i=>y[i]=y[i]-minY+PADY);
 
 /* ---- 4. dibujar ---- */
-const GENNAME=['Tronco','2.ª generación','3.ª generación','4.ª generación','5.ª generación',
+const GENNAME=['1.ª generación','2.ª generación','3.ª generación','4.ª generación','5.ª generación',
                '6.ª generación','7.ª generación','8.ª generación','9.ª generación'];
 const W=PADX*2+(maxGen+1)*(CW+GAPX)-GAPX;
 const H=Math.max(...ids.map(i=>y[i]))+CH+PADY;
