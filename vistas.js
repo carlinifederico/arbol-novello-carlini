@@ -6,6 +6,11 @@
    se proyectan las coordenadas de verdad sobre dos recuadros. Las distancias
    relativas dentro de cada país son correctas; entre países, no: el océano se
    dibuja como un puente, que es lo que fue. */
+/* Los botones de raíz de la barra de arriba, en orden. Explícitos a propósito:
+   antes la app los derivaba sola —la persona raíz más sus ancestros más cercanos— y
+   terminaba mostrando gente que no tenía por qué estar ahí arriba. Se eligen a mano. */
+const RAICES = ['federico', 'anibal', 'patricia']
+
 const LUGARES = [
   // Friuli
   {id:'latisana', n:'Latisana',                lat:45.774, lon:13.001, pais:'it', rama:'friuli',
