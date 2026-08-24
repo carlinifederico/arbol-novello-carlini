@@ -500,7 +500,7 @@ function build(){
     });
     if(cambio){ remidiendo=true; build(); remidiendo=false; return; }
   }
-  fit();
+  encuadrar();
 }
 let remidiendo=false;
 
@@ -552,6 +552,18 @@ function fit(){
   const W=parseFloat(world.style.width), H=parseFloat(world.style.height);
   const nk=clamp(Math.min((r.width-70)/W,(r.height-70)/H,1.15));
   hacia(nk,(r.width-W*nk)/2,(r.height-H*nk)/2,false);
+}
+/* Encuadre de arranque. Meter diez generaciones en un teléfono da un zoom del
+   doce por ciento: no se lee un solo nombre y la primera impresión es un campo
+   de puntitos. Así que si lo que entraría es ilegible, en vez de mostrar todo
+   se arranca centrado en la persona raíz, a un tamaño en el que se lee. "Ver
+   todo" sigue mostrando todo, pero porque uno lo pide. */
+function encuadrar(){
+  const r=vp.getBoundingClientRect();
+  const W=parseFloat(world.style.width), H=parseFloat(world.style.height);
+  const nk=Math.min((r.width-70)/W,(r.height-70)/H,1.15);
+  if(nk<.34) centrarEn(root, r.width<560?.85:.7);
+  else fit();
 }
 function centrarEn(id,nk){
   if(X[id]===undefined) return;
