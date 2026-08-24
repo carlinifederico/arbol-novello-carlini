@@ -102,6 +102,29 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 .lightbox img{max-width:100%;max-height:92vh;object-fit:contain;border-radius:6px}
 .srcurl{display:inline-block;margin-top:4px;font-size:11px;color:var(--arg);text-decoration:none;
   border-bottom:1px solid currentColor}
+.pagina{position:absolute;inset:0;overflow-y:auto;background:var(--bg);z-index:25;padding:26px 22px 70px}
+.pw{max-width:1120px;margin:0 auto}
+.pagina h2{font-family:Fraunces,serif;font-size:26px;font-weight:500;margin:0 0 6px;letter-spacing:-.01em}
+.pagina .intro{color:var(--muted);max-width:66ch;font-size:14.5px;line-height:1.6}
+.mapa{margin-top:22px;border:1px solid var(--line);border-radius:14px;background:var(--card);
+  box-shadow:var(--lift);overflow:hidden}
+.mapa svg{display:block;width:100%;height:auto}
+.rutas{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:20px}
+.ruta{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:13px 15px}
+.ruta .via{font-size:12.5px;font-weight:600}
+.ruta .quien{font-size:11px;color:var(--faint);margin-top:1px}
+.ruta p{margin:7px 0 0;font-size:12.5px;line-height:1.55;color:var(--muted)}
+.ruta .año{float:right;font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+.hall{display:grid;gap:13px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));margin-top:20px}
+.h{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:15px 17px}
+.h h3{font-family:Fraunces,serif;font-size:16.5px;font-weight:500;margin:7px 0 7px;line-height:1.3}
+.h p{margin:0;font-size:13px;line-height:1.6;color:var(--muted)}
+.et{display:inline-block;font-size:9px;letter-spacing:.09em;text-transform:uppercase;
+  padding:2px 8px;border-radius:4px}
+.et-hallazgo{background:var(--friuli-soft);color:var(--friuli)}
+.et-negativo{background:var(--sicilia-soft);color:var(--sicilia)}
+.et-muro{background:var(--grid);color:var(--muted)}
+.et-proximo{background:var(--open-soft);color:var(--open)}
 .nivel{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;font-size:11px;
   color:var(--faint);background:color-mix(in srgb,var(--bg) 82%,transparent);
   padding:4px 9px;border-radius:7px;z-index:20;font-variant-numeric:tabular-nums}
@@ -163,6 +186,11 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 <div class="app">
   <div class="top">
     <div class="brand">Árbol Novello · Carlini</div>
+    <div class="seg" id="vistas">
+      <button data-v="arbol" aria-pressed="true">Árbol</button>
+      <button data-v="rutas" aria-pressed="false">Rutas</button>
+      <button data-v="hallazgos" aria-pressed="false">Hallazgos</button>
+    </div>
     <div class="seg" id="roots">
       <button data-r="antonio" aria-pressed="true">Antonio</button>
       <button data-r="federico" aria-pressed="false">Federico</button>
@@ -189,12 +217,14 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
       <div class="hint" id="hint"></div>
       <div class="nivel" id="nivel">100%</div>
     </div>
+    <div class="pagina" id="pagina" hidden></div>
     <aside class="sheet" id="sheet"><div class="sheet-in" id="sheetIn"></div>
       <button class="x" id="x" aria-label="Cerrar la ficha">× <span>cerrar</span></button></aside>
   </div>
 </div>
 
 <script src="datos.js"></script>
+<script src="vistas.js"></script>
 <script>
 const ids=Object.keys(P);
 const pa=id=>(P[id]?.pa||[]).filter(x=>P[x]);
@@ -485,4 +515,109 @@ document.getElementById('q').oninput=e=>{
     n.classList.toggle('mute', !!s && !P[n.dataset.id].n.toLowerCase().includes(s)));
 };
 build();
+</script>
+
+<script>
+/* ═══════════ vista de rutas: por dónde se movió la familia ═══════════ */
+const RAMA_COLOR={friuli:'var(--friuli)',sicilia:'var(--sicilia)',comun:'var(--arg)',puerto:'var(--muted)'};
+
+function dibujarMapa(){
+  const IT=LUGARES.filter(l=>l.pais==='it'), AR=LUGARES.filter(l=>l.pais==='ar');
+  // cada país en su propio recuadro, con sus coordenadas reales proyectadas adentro
+  const caja=(pts,x0,y0,w,h)=>{
+    const la=pts.map(p=>p.lat), lo=pts.map(p=>p.lon);
+    const laMin=Math.min(...la),laMax=Math.max(...la),loMin=Math.min(...lo),loMax=Math.max(...lo);
+    const m={};
+    pts.forEach(p=>m[p.id]={
+      x:x0+ (loMax===loMin?w/2: (p.lon-loMin)/(loMax-loMin)*w),
+      y:y0+ (laMax===laMin?h/2: (laMax-p.lat)/(laMax-laMin)*h)});
+    return m;
+  };
+  const W=1120,H=560;
+  const pos={...caja(IT,90,70,300,420), ...caja(AR,700,110,300,360)};
+
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa de los movimientos de la familia">`;
+  s+=`<rect x="60" y="40" width="360" height="480" rx="16" fill="var(--bg)" stroke="var(--hair)"/>`;
+  s+=`<rect x="670" y="80" width="360" height="420" rx="16" fill="var(--bg)" stroke="var(--hair)"/>`;
+  s+=`<text x="240" y="30" text-anchor="middle" font-family="Fraunces,serif" font-size="15" fill="var(--muted)">Italia</text>`;
+  s+=`<text x="850" y="70" text-anchor="middle" font-family="Fraunces,serif" font-size="15" fill="var(--muted)">Argentina</text>`;
+  s+=`<text x="545" y="270" text-anchor="middle" font-size="10.5" fill="var(--faint)" letter-spacing="1.5">EL ATLÁNTICO</text>`;
+  s+=`<text x="545" y="288" text-anchor="middle" font-size="9.5" fill="var(--faint)">unos 11.000 km · tres semanas de barco</text>`;
+
+  RUTAS.forEach(r=>{
+    const a=pos[r.de], b=pos[r.a]; if(!a||!b) return;
+    const l=LUGARES.find(x=>x.id===r.a);
+    const col=RAMA_COLOR[l.rama]||'var(--muted)';
+    const cx=(a.x+b.x)/2, cy=(a.y+b.y)/2-Math.min(90,Math.abs(b.x-a.x)*0.22+18);
+    s+=`<path d="M${a.x} ${a.y} Q${cx} ${cy} ${b.x} ${b.y}" fill="none" stroke="${col}"
+         stroke-width="1.6" opacity=".55"${r.firme?'':' stroke-dasharray="4 4"'}/>`;
+    s+=`<text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="9.5" fill="${col}"
+         opacity=".9" font-variant-numeric="tabular-nums">${esc(r.año)}</text>`;
+  });
+
+  LUGARES.forEach(l=>{
+    const p=pos[l.id]; if(!p) return;
+    const col=RAMA_COLOR[l.rama]||'var(--muted)';
+    const derecha = l.pais==='ar';
+    s+=`<circle cx="${p.x}" cy="${p.y}" r="5" fill="${col}"/>`;
+    s+=`<circle cx="${p.x}" cy="${p.y}" r="10" fill="${col}" opacity=".14"/>`;
+    s+=`<text x="${p.x+(derecha?12:-12)}" y="${p.y+4}" text-anchor="${derecha?'start':'end'}"
+         font-size="11.5" font-weight="500" fill="var(--ink)">${esc(l.n)}</text>`;
+  });
+  s+='</svg>';
+  return s;
+}
+
+function pintarRutas(){
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  let h=`<div class="pw"><h2>Por dónde se movió la familia</h2>
+   <p class="intro">Dos migraciones que arrancaron a mil quinientos kilómetros una de otra —el
+   Friuli en el extremo noreste, Sicilia en el sur— y terminaron en el mismo partido del conurbano
+   bonaerense. Las líneas punteadas son los tramos que sabemos por testimonio pero no por documento.</p>
+   <div class="mapa">${dibujarMapa()}</div><div class="rutas">`;
+  RUTAS.forEach(r=>{
+    const A=LUGARES.find(x=>x.id===r.de), B=LUGARES.find(x=>x.id===r.a);
+    h+=`<div class="ruta"><span class="año">${esc(r.año)}</span>
+      <div class="via">${esc(A.n)} → ${esc(B.n)}</div>
+      <div class="quien">${esc(r.quien)}${r.firme?'':' · sin documento'}</div>
+      <p>${esc(r.texto)}</p></div>`;
+  });
+  h+='</div><div class="rutas" style="margin-top:22px">';
+  LUGARES.forEach(l=>{ h+=`<div class="ruta"><div class="via">${esc(l.n)}</div>
+     <p>${esc(l.nota)}</p></div>`; });
+  return h+'</div></div>';
+}
+
+function pintarHallazgos(){
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const nombre={hallazgo:'hallazgo',negativo:'negativo verificado',muro:'el muro',proximo:'próximo paso'};
+  let h=`<div class="pw"><h2>Lo que se buscó, lo que apareció y lo que no está</h2>
+   <p class="intro">Un negativo verificado también es un resultado: dice dónde dejar de buscar.
+   Estos salieron de abrir los registros originales y leerlos página por página, no de consultar
+   índices de terceros.</p><div class="hall">`;
+  ['hallazgo','negativo','muro','proximo'].forEach(tipo=>
+    HALLAZGOS.filter(x=>x.tipo===tipo).forEach(x=>{
+      h+=`<div class="h"><span class="et et-${tipo}">${nombre[tipo]}</span>
+        <h3>${esc(x.t)}</h3><p>${esc(x.b)}</p></div>`;
+    }));
+  return h+'</div></div>';
+}
+
+/* ── conmutar vistas ── */
+const pagina=document.getElementById('pagina');
+let vista='arbol';
+function irA(v){
+  vista=v;
+  document.querySelectorAll('#vistas button').forEach(b=>
+    b.setAttribute('aria-pressed',String(b.dataset.v===v)));
+  const esArbol = v==='arbol';
+  pagina.hidden=esArbol;
+  document.getElementById('roots').style.display=esArbol?'':'none';
+  if(!esArbol){
+    pagina.innerHTML = v==='rutas' ? pintarRutas() : pintarHallazgos();
+    pagina.scrollTop=0;
+  }
+}
+document.querySelectorAll('#vistas button').forEach(b=>b.onclick=()=>irA(b.dataset.v));
 </script>
