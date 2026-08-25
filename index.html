@@ -94,6 +94,11 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 .p.open{border-style:dashed;border-left-style:solid;background:var(--open-soft)}
 .p .nm{display:block;font-size:13.5px;font-weight:600;line-height:1.24}
 .p .yr{display:block;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
+.p .geo{display:flex;align-items:center;gap:4px;margin-top:3px;font-size:10.5px;color:var(--muted);
+  line-height:1.2;overflow:hidden}
+.p .geo .fl{font-style:normal;font-size:11px;line-height:1;flex:none;
+  filter:saturate(.85);cursor:help}
+.p .geo .zn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .p .pr{display:block;font-size:10.5px;color:var(--faint);margin-top:3px;font-style:italic;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .docs{display:grid;gap:6px;margin-top:8px}
@@ -351,7 +356,7 @@ function build(){
      altura dependen dos cosas distintas —cuánto espacio reserva el layout y
      dónde arrancan los hermanos— y si se calculan por separado se desfasan. */
   const estimado=id=>{const p=P[id];
-    return CH+(p.pr?18:0)+((p.open||p.dc)?16:0);};
+    return CH+(p.pr?18:0)+((p.nac?.length||p.zn||p.zm)?15:0)+((p.open||p.dc)?16:0);};
   const altoCaja=id=>medido[id]??estimado(id);
   const altoDe=id=>altoCaja(id)+(hermanos(id).length?hermanos(id).length*SIB+6:0);
 
@@ -471,6 +476,28 @@ function build(){
       t.dataset.a=id; t.dataset.b=ps[0]; wires.appendChild(t); }
   });
 
+  /* La línea geográfica de la tarjeta: bandera del país de nacimiento y, si
+     hay ciudadanía documentada además, la segunda. Después la zona donde
+     nació y —cuando se sabe— la zona donde murió.
+
+     Sólo aparece si el dato existe. De 103 personas hoy lo tienen 33: el
+     resto no tiene lugar de nacimiento en ningún acta todavía, y una bandera
+     puesta por deducción sería una afirmación sin respaldo, que es justo lo
+     que este árbol trata de no hacer. */
+  const BANDERA={ it:['🇮🇹','Italia'], ar:['🇦🇷','Argentina'], gr:['🇬🇷','Grecia'] };
+  function geo(p){
+    const banderas=(p.nac||[]).map(c=>{
+      const b=BANDERA[c]; if(!b) return '';
+      const nota = c==='gr' ? 'Corfú — hoy Grecia; cuando nació, República de Venecia' : b[1];
+      return `<i class="fl" title="${nota}">${b[0]}</i>`;
+    }).join('');
+    const lugar = p.zn && p.zm && p.zn!==p.zm ? `${p.zn} → ${p.zm}`
+                : p.zn ? p.zn
+                : p.zm ? `† ${p.zm}` : '';
+    if(!banderas && !lugar) return '';
+    return `<span class="geo">${banderas}${lugar?`<span class="zn">${lugar}</span>`:''}</span>`;
+  }
+
   dibujados.forEach(id=>{
     const p=P[id], b=document.createElement('button');
     b.className='p'+(p.open?' open':'')+(p.t&&!p.open?' test':'');
@@ -478,6 +505,7 @@ function build(){
     b.style.cssText=`left:${X[id]}px;top:${Y[id]}px;width:${CW}px;min-height:${CH}px`;
     const cert = p.c?.length && !p.t && !p.hyp;
     b.innerHTML=`<span class="nm">${p.n}${cert?'<i class="cert" title="Respaldado por documentos">✓</i>':''}</span><span class="yr">${p.d}</span>`+
+      geo(p)+
       (p.pr?`<span class="pr" title="${p.pr}">${p.pr}</span>`:'')+
       (p.open?'<span class="tag f">frontera</span>':'')+
       (p.dc?'<span class="tag dc">dante causa</span>':'');
@@ -568,7 +596,7 @@ function fit(){
    de puntitos. Así que si lo que entraría es ilegible, en vez de mostrar todo
    se arranca centrado en la persona raíz, a un tamaño en el que se lee. "Ver
    todo" sigue mostrando todo, pero porque uno lo pide. */
-const altoCajaDe=id=>{const p=P[id];return CH+(p.pr?18:0)+((p.open||p.dc)?16:0);};
+const altoCajaDe=id=>{const p=P[id];return CH+(p.pr?18:0)+((p.nac?.length||p.zn||p.zm)?15:0)+((p.open||p.dc)?16:0);};
 function encuadrar(){
   const r=vp.getBoundingClientRect();
   const W=parseFloat(world.style.width), H=parseFloat(world.style.height);
