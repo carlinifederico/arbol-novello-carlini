@@ -96,8 +96,8 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 .p .yr{display:block;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
 .p .geo{display:flex;align-items:center;gap:4px;margin-top:3px;font-size:10.5px;color:var(--muted);
   line-height:1.2;overflow:hidden}
-.p .geo .fl{font-style:normal;font-size:11px;line-height:1;flex:none;
-  filter:saturate(.85);cursor:help}
+.p .geo .fl{flex:none;display:block;border-radius:1.5px;cursor:help;
+  box-shadow:0 0 0 .5px rgba(0,0,0,.28);opacity:.92}
 .p .geo .zn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .p .pr{display:block;font-size:10.5px;color:var(--faint);margin-top:3px;font-style:italic;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -484,12 +484,22 @@ function build(){
      resto no tiene lugar de nacimiento en ningún acta todavía, y una bandera
      puesta por deducción sería una afirmación sin respaldo, que es justo lo
      que este árbol trata de no hacer. */
-  const BANDERA={ it:['🇮🇹','Italia'], ar:['🇦🇷','Argentina'], gr:['🇬🇷','Grecia'] };
+  /* Banderas dibujadas a mano en SVG, no emoji.
+     Windows no trae los glifos de bandera en su fuente de emoji: en vez del
+     dibujo muestra las dos letras del país —«IT», «AR»—, que es exactamente
+     lo que no queremos. Doce por nueve píxeles, bandas planas y un borde
+     finito para que se despeguen del fondo claro. */
+  const BANDERA={
+    it:['Italia',    '<rect width="4" height="9" fill="#0E8C4C"/><rect x="4" width="4" height="9" fill="#F2F0EA"/><rect x="8" width="4" height="9" fill="#CE2B37"/>'],
+    ar:['Argentina', '<rect width="12" height="3" fill="#74ACDF"/><rect y="3" width="12" height="3" fill="#F2F0EA"/><rect y="6" width="12" height="3" fill="#74ACDF"/><circle cx="6" cy="4.5" r="1" fill="#F6B40E"/>'],
+    gr:['Grecia',    '<rect width="12" height="9" fill="#0D5EAF"/><rect y="1.8" width="12" height="1.8" fill="#F2F0EA"/><rect y="5.4" width="12" height="1.8" fill="#F2F0EA"/><rect width="5.4" height="5.4" fill="#0D5EAF"/><rect x="1.8" width="1.8" height="5.4" fill="#F2F0EA"/><rect y="1.8" width="5.4" height="1.8" fill="#F2F0EA"/>'],
+  };
   function geo(p){
     const banderas=(p.nac||[]).map(c=>{
       const b=BANDERA[c]; if(!b) return '';
-      const nota = c==='gr' ? 'Corfú — hoy Grecia; cuando nació, República de Venecia' : b[1];
-      return `<i class="fl" title="${nota}">${b[0]}</i>`;
+      const nota = c==='gr' ? 'Corfú — hoy Grecia; cuando nació, República de Venecia' : b[0];
+      return `<svg class="fl" viewBox="0 0 12 9" width="12" height="9" role="img" aria-label="${b[0]}">`+
+             `<title>${nota}</title>${b[1]}</svg>`;
     }).join('');
     const lugar = p.zn && p.zm && p.zn!==p.zm ? `${p.zn} → ${p.zm}`
                 : p.zn ? p.zn
