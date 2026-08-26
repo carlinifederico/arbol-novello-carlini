@@ -69,7 +69,7 @@ input[type=search]{font:inherit;font-size:12.5px;padding:5px 11px;border:1px sol
      queda con el pinch y con el tirón para recargar, y no llega nada acá */
   touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none;
   -webkit-tap-highlight-color:transparent}
-.p,.sib{-webkit-tap-highlight-color:transparent}
+.p,.sib,.hijo{-webkit-tap-highlight-color:transparent}
 .vp.drag{cursor:grabbing}
 .world{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
 .colhead{position:absolute;top:0;white-space:nowrap;pointer-events:none}
@@ -165,24 +165,22 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 .sib.mute{opacity:.18}
 .sib b{font-weight:500}
 
-/* Los puntitos: la señal de que ese hermano tuvo hijos y el árbol sigue.
-   Escondidos hasta el 75% de zoom — de lejos serían ruido. */
-.pts{font-style:normal;letter-spacing:1.5px;margin-left:5px;color:var(--open);
-  opacity:0;transition:opacity .18s;pointer-events:none;font-weight:700}
-body.cerca .pts{opacity:.8;pointer-events:auto;cursor:pointer}
-body.cerca .sib:hover .pts{opacity:1}
-
-/* La ramificación que se abre al pasar el mouse. */
-.brote{position:absolute;z-index:14;display:none;flex-direction:column;gap:1px;
-  padding:6px 7px 7px;border:1px solid var(--open);border-radius:8px;
-  background:var(--card);box-shadow:var(--lift2)}
-.brote.on{display:flex}
-.brote .ttl{font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;
-  color:var(--open);margin-bottom:3px}
-.brote button{border:0;background:none;text-align:left;padding:2px 3px;border-radius:4px;
-  font-size:10.5px;line-height:1.35;color:var(--ink);cursor:pointer}
-.brote button:hover{background:var(--open-soft)}
-.brote em{font-style:normal;color:var(--faint);font-variant-numeric:tabular-nums}
+/* Los hijos de un hermano, dibujados como rama: sangrados y colgando de una
+   línea que baja desde el padre. Aparecen sólo al acercarse. */
+.hijo{position:absolute;font-size:9.5px;line-height:1.5;color:var(--faint);
+  cursor:pointer;text-align:left;border:0;background:none;padding:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:color .12s,opacity .18s}
+.hijo:hover{color:var(--muted)}
+.hijo.mute{opacity:.18}
+.hijo b{font-weight:500}
+.hijo.mas{font-style:italic;color:var(--faint);opacity:.75}
+/* el codito: la vertical que baja del hermano y dobla hacia el hijo */
+.hijo .cod{display:inline-block;width:9px;height:6px;margin-right:4px;
+  border-left:1px solid var(--line);border-bottom:1px solid var(--line);
+  border-bottom-left-radius:3px;vertical-align:2px}
+/* el hermano que ramifica se marca apenas, para que la línea tenga de dónde salir */
+.sib.ramifica b{color:var(--muted)}
 
 .sheet{flex:none;width:0;overflow:hidden;transition:width .22s ease;
   border-left:1px solid var(--hair);background:var(--card);position:relative}
@@ -337,6 +335,24 @@ const GEN=(()=>{
 })();
 
 const CW=196, CH=60, GX=78, GY=22, SIB=15;
+
+/* De cerca, el árbol muestra también los hijos de los hermanos.
+ *
+ * No son ascendencia de la raíz, así que dibujarlos siempre volvería ilegible
+ * el pedigrí. Pero tampoco corresponde disimular que la familia sigue. La
+ * solución es que aparezcan al acercarse, y que lo hagan como ramas de verdad
+ * —con su sangría y su línea— y no como un globito flotando por encima.
+ *
+ * Eso obliga a que las filas entren en el CÁLCULO DEL ALTO, no sólo en el
+ * dibujo: si no, se superpondrían con lo que tienen debajo. Por eso al cruzar
+ * el umbral de zoom el árbol se reconstruye entero. */
+let cerca=false;
+const HIJOS_MAX=6;
+const filasDeHermanos=id=>hermanos(id).reduce((n,h)=>{
+  if(!cerca) return n+1;
+  const c=kids(h).length;
+  return n+1+Math.min(c,HIJOS_MAX)+(c>HIJOS_MAX?1:0);
+},0);
 /* Parentesco visto desde la raíz. Después de tatarabuelos el castellano se
    queda sin palabras de uso corriente, así que se numeran. */
 const PARENTESCO=d=>['','Padres','Abuelos','Bisabuelos','Tatarabuelos',
@@ -377,7 +393,7 @@ function build(){
   const estimado=id=>{const p=P[id];
     return CH+(p.pr?18:0)+((p.nac?.length||p.zn||p.zm)?15:0)+((p.open||p.dc)?16:0);};
   const altoCaja=id=>medido[id]??estimado(id);
-  const altoDe=id=>altoCaja(id)+(hermanos(id).length?hermanos(id).length*SIB+6:0);
+  const altoDe=id=>altoCaja(id)+(hermanos(id).length?filasDeHermanos(id)*SIB+6:0);
 
   function poner(id,d){
     if(!P[id]||puestos.has(id)) return Y[id];
@@ -541,44 +557,46 @@ function build(){
     b.onclick=e=>{e.stopPropagation();show(id);};
     layer.appendChild(b);
 
-    hermanos(id).forEach((h,i)=>{
-      const s=document.createElement('button');
-      const top=Y[id]+altoCaja(id)+4+i*SIB;
-      s.className='sib'; s.dataset.id=h;
-      s.style.cssText=`left:${X[id]+10}px;top:${top}px;width:${CW-10}px`;
+    let fila=0;
+    hermanos(id).forEach(h=>{
+      const base=Y[id]+altoCaja(id)+4;
       const hijos=kids(h);
-      s.innerHTML=`<b>${P[h].n}</b>${yearOf(h)<9999?' '+yearOf(h):''}`+
-        (hijos.length?`<i class="pts" aria-hidden="true">${'·'.repeat(Math.min(hijos.length,4))}</i>`:'');
+      const s=document.createElement('button');
+      s.className='sib'+(cerca&&hijos.length?' ramifica':''); s.dataset.id=h;
+      s.style.cssText=`left:${X[id]+10}px;top:${base+fila*SIB}px;width:${CW-10}px`;
+      s.innerHTML=`<b>${P[h].n}</b>${yearOf(h)<9999?' '+yearOf(h):''}`;
       s.title=`${P[h].n} · hermano/a de ${P[id].n}`+
         (hijos.length?` · ${hijos.length} ${hijos.length===1?'hijo/a':'hijos'}`:'');
       s.onclick=e=>{e.stopPropagation();show(h);};
       layer.appendChild(s);
+      fila++;
+      if(!cerca||!hijos.length) return;
 
-      /* El árbol tiene que dejar entrever que sigue. Un hermano con
-         descendencia lleva unos puntitos que sólo se ven de cerca —de lejos
-         serían ruido— y al pasarle el mouse se abre la ramificación con sus
-         hijos. No los dibujamos siempre porque no son ascendencia de la raíz:
-         son una rama lateral, y el pedigrí se volvería ilegible. */
-      if(!hijos.length) return;
-      const brote=document.createElement('div');
-      brote.className='brote';
-      brote.style.cssText=`left:${X[id]+10}px;top:${top+SIB-2}px;width:${CW+34}px`;
-      brote.innerHTML=`<span class="ttl">hijos de ${P[h].n.split(' ')[0]}</span>`+
-        hijos.map(c=>`<button data-go2="${c}">${P[c].n}${yearOf(c)<9999?` <em>${yearOf(c)}</em>`:''}</button>`).join('');
-      brote.querySelectorAll('[data-go2]').forEach(b=>
-        b.onclick=e=>{e.stopPropagation();show(b.dataset.go2);});
-      layer.appendChild(brote);
-
-      let dentro=false;
-      const abrir=()=>{ brote.classList.add('on'); };
-      const cerrar=()=>{ if(!dentro) brote.classList.remove('on'); };
-      s.addEventListener('pointerenter',abrir);
-      s.addEventListener('pointerleave',()=>{ setTimeout(cerrar,120); });
-      brote.addEventListener('pointerenter',()=>{dentro=true;});
-      brote.addEventListener('pointerleave',()=>{dentro=false;cerrar();});
-      // en pantalla táctil no hay hover: los puntitos abren y cierran
-      s.querySelector('.pts')?.addEventListener('pointerdown',e=>{
-        e.stopPropagation(); e.preventDefault(); brote.classList.toggle('on'); });
+      /* Los hijos, como ramas: sangrados bajo su padre y colgando de una línea
+         vertical que baja desde él. Se cortan en HIJOS_MAX y la última fila
+         dice cuántos faltan — Beatriz tuvo once y once filas taparían media
+         pantalla. La ficha los lista todos igual. */
+      const muestra=hijos.slice(0,HIJOS_MAX);
+      muestra.forEach(c=>{
+        const n=document.createElement('button');
+        n.className='hijo'; n.dataset.id=c;
+        n.style.cssText=`left:${X[id]+24}px;top:${base+fila*SIB}px;width:${CW-24}px`;
+        n.innerHTML=`<span class="cod"></span><b>${P[c].n}</b>${yearOf(c)<9999?' '+yearOf(c):''}`;
+        n.title=`${P[c].n} · hijo/a de ${P[h].n}`;
+        n.onclick=e=>{e.stopPropagation();show(c);};
+        layer.appendChild(n);
+        fila++;
+      });
+      if(hijos.length>HIJOS_MAX){
+        const mas=document.createElement('button');
+        mas.className='hijo mas';
+        mas.style.cssText=`left:${X[id]+24}px;top:${base+fila*SIB}px;width:${CW-24}px`;
+        mas.innerHTML=`<span class="cod"></span>y ${hijos.length-HIJOS_MAX} más`;
+        mas.title=`Ver la ficha de ${P[h].n}, que los lista a todos`;
+        mas.onclick=e=>{e.stopPropagation();show(h);};
+        layer.appendChild(mas);
+        fila++;
+      }
     });
   });
 
@@ -611,12 +629,21 @@ const K_MIN=.12, K_MAX=3.2;
 let k=1,tx=0,ty=0, kObj=1,txObj=0,tyObj=0, anim=null;
 const QUIETO=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=v=>Math.min(K_MAX,Math.max(K_MIN,v));
-/* `cerca` se prende cuando el zoom pasa el 75%. Es lo que hace aparecer los
-   puntitos de los hermanos con descendencia: de lejos el árbol tiene que
-   leerse limpio, y de cerca puede empezar a contar que hay más. */
+/* `cerca` se prende cuando el zoom pasa el 70%, y eso hace crecer el árbol:
+   aparecen los hijos de los hermanos. Como esas filas ocupan lugar, hay que
+   REHACER el layout — dibujarlas encima se superpondría con lo de abajo.
+   El rebuild va detrás de un cambio de estado, no en cada cuadro: `pinta` se
+   llama sesenta veces por segundo mientras uno arrastra o hace zoom. */
 const pinta=()=>{
   world.style.transform=`translate(${Math.round(tx*100)/100}px,${Math.round(ty*100)/100}px) scale(${k})`;
-  document.body.classList.toggle('cerca', k>=.75);
+  const ahora=k>=.7;
+  if(ahora!==cerca){
+    cerca=ahora;
+    document.body.classList.toggle('cerca',cerca);
+    const guardado=sel;
+    build();
+    if(guardado&&P[guardado]) show(guardado);
+  }
 };
 const nivel=document.getElementById('nivel');
 function pinta2(){ pinta(); if(nivel) nivel.textContent=Math.round(k*100)+'%'; }
@@ -740,7 +767,7 @@ function arranca(){
 }
 
 vp.addEventListener('pointerdown',e=>{
-  if(e.target.closest('.p,.sib')) return;
+  if(e.target.closest('.p,.sib,.hijo')) return;
   if(e.pointerType==='mouse'&&e.button!==0) return;
   if(inercia){cancelAnimationFrame(inercia); inercia=null;}
   dedos.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -810,7 +837,7 @@ vp.addEventListener('pointercancel',suelta);
    tarde y a veces no llega, así que se detecta a mano. */
 let ultimoToque=0, ultimoXY=null;
 vp.addEventListener('pointerup',e=>{
-  if(e.target.closest('.p,.sib')) return;
+  if(e.target.closest('.p,.sib,.hijo')) return;
   const ahora=performance.now(), r=vp.getBoundingClientRect();
   const cerca=ultimoXY&&Math.hypot(e.clientX-ultimoXY[0],e.clientY-ultimoXY[1])<32;
   if(ahora-ultimoToque<300 && cerca && !movio){
@@ -873,7 +900,7 @@ function show(id){
   while(q.length){const c=q.pop(); pa(c).forEach(p=>{if(!linea.has(p)){linea.add(p);q.push(p);}});}
   q=[id];
   while(q.length){const c=q.pop(); kids(c).forEach(x=>{if(!linea.has(x)){linea.add(x);q.push(x);}});}
-  document.querySelectorAll('.p,.sib').forEach(n=>{
+  document.querySelectorAll('.p,.sib,.hijo').forEach(n=>{
     n.classList.toggle('sel',n.classList.contains('p')&&n.dataset.id===id);
     n.classList.toggle('mute',!linea.has(n.dataset.id));});
   wires.querySelectorAll('path,text,circle').forEach(w=>
@@ -950,13 +977,13 @@ function show(id){
 }
 function cerrar(){
   sheet.classList.remove('on'); sel=null;
-  document.querySelectorAll('.p,.sib').forEach(n=>n.classList.remove('sel','mute'));
+  document.querySelectorAll('.p,.sib,.hijo').forEach(n=>n.classList.remove('sel','mute'));
   wires.querySelectorAll('path,text,circle').forEach(w=>w.style.opacity=1);
 }
 document.getElementById('x').onclick=cerrar;
 addEventListener('keydown',e=>{ if(e.key==='Escape') cerrar(); });
 // clic en el vacío cierra la ficha; arrastrar, no
-vp.addEventListener('pointerup',e=>{ if(!e.target.closest('.p,.sib') && !movio) cerrar(); });
+vp.addEventListener('pointerup',e=>{ if(!e.target.closest('.p,.sib,.hijo') && !movio) cerrar(); });
 function syncRoots(){ document.querySelectorAll('#roots button').forEach(b=>
   b.setAttribute('aria-pressed',String(b.dataset.r===root))); }
 /* Cambiar de raíz reescribe la URL. Así lo que se está viendo es siempre lo
@@ -974,7 +1001,7 @@ function linkDeRama(k){
 document.querySelectorAll('#roots button').forEach(b=>b.onclick=()=>fijarRaiz(b.dataset.r));
 document.getElementById('q').oninput=e=>{
   const s=e.target.value.trim().toLowerCase();
-  document.querySelectorAll('.p,.sib').forEach(n=>
+  document.querySelectorAll('.p,.sib,.hijo').forEach(n=>
     n.classList.toggle('mute', !!s && !P[n.dataset.id].n.toLowerCase().includes(s)));
 };
 /* syncRoots antes de dibujar: si la raíz vino por ?r=, el botón resaltado
