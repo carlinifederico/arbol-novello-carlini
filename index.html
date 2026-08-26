@@ -165,6 +165,25 @@ svg.wires{position:absolute;top:0;left:0;overflow:visible;pointer-events:none}
 .sib.mute{opacity:.18}
 .sib b{font-weight:500}
 
+/* Los puntitos: la señal de que ese hermano tuvo hijos y el árbol sigue.
+   Escondidos hasta el 75% de zoom — de lejos serían ruido. */
+.pts{font-style:normal;letter-spacing:1.5px;margin-left:5px;color:var(--open);
+  opacity:0;transition:opacity .18s;pointer-events:none;font-weight:700}
+body.cerca .pts{opacity:.8;pointer-events:auto;cursor:pointer}
+body.cerca .sib:hover .pts{opacity:1}
+
+/* La ramificación que se abre al pasar el mouse. */
+.brote{position:absolute;z-index:14;display:none;flex-direction:column;gap:1px;
+  padding:6px 7px 7px;border:1px solid var(--open);border-radius:8px;
+  background:var(--card);box-shadow:var(--lift2)}
+.brote.on{display:flex}
+.brote .ttl{font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--open);margin-bottom:3px}
+.brote button{border:0;background:none;text-align:left;padding:2px 3px;border-radius:4px;
+  font-size:10.5px;line-height:1.35;color:var(--ink);cursor:pointer}
+.brote button:hover{background:var(--open-soft)}
+.brote em{font-style:normal;color:var(--faint);font-variant-numeric:tabular-nums}
+
 .sheet{flex:none;width:0;overflow:hidden;transition:width .22s ease;
   border-left:1px solid var(--hair);background:var(--card);position:relative}
 .sheet.on{width:372px}
@@ -524,12 +543,42 @@ function build(){
 
     hermanos(id).forEach((h,i)=>{
       const s=document.createElement('button');
+      const top=Y[id]+altoCaja(id)+4+i*SIB;
       s.className='sib'; s.dataset.id=h;
-      s.style.cssText=`left:${X[id]+10}px;top:${Y[id]+altoCaja(id)+4+i*SIB}px;width:${CW-10}px`;
-      s.innerHTML=`<b>${P[h].n}</b>${yearOf(h)<9999?' '+yearOf(h):''}`;
-      s.title=`${P[h].n} · hermano/a de ${P[id].n}`;
+      s.style.cssText=`left:${X[id]+10}px;top:${top}px;width:${CW-10}px`;
+      const hijos=kids(h);
+      s.innerHTML=`<b>${P[h].n}</b>${yearOf(h)<9999?' '+yearOf(h):''}`+
+        (hijos.length?`<i class="pts" aria-hidden="true">${'·'.repeat(Math.min(hijos.length,4))}</i>`:'');
+      s.title=`${P[h].n} · hermano/a de ${P[id].n}`+
+        (hijos.length?` · ${hijos.length} ${hijos.length===1?'hijo/a':'hijos'}`:'');
       s.onclick=e=>{e.stopPropagation();show(h);};
       layer.appendChild(s);
+
+      /* El árbol tiene que dejar entrever que sigue. Un hermano con
+         descendencia lleva unos puntitos que sólo se ven de cerca —de lejos
+         serían ruido— y al pasarle el mouse se abre la ramificación con sus
+         hijos. No los dibujamos siempre porque no son ascendencia de la raíz:
+         son una rama lateral, y el pedigrí se volvería ilegible. */
+      if(!hijos.length) return;
+      const brote=document.createElement('div');
+      brote.className='brote';
+      brote.style.cssText=`left:${X[id]+10}px;top:${top+SIB-2}px;width:${CW+34}px`;
+      brote.innerHTML=`<span class="ttl">hijos de ${P[h].n.split(' ')[0]}</span>`+
+        hijos.map(c=>`<button data-go2="${c}">${P[c].n}${yearOf(c)<9999?` <em>${yearOf(c)}</em>`:''}</button>`).join('');
+      brote.querySelectorAll('[data-go2]').forEach(b=>
+        b.onclick=e=>{e.stopPropagation();show(b.dataset.go2);});
+      layer.appendChild(brote);
+
+      let dentro=false;
+      const abrir=()=>{ brote.classList.add('on'); };
+      const cerrar=()=>{ if(!dentro) brote.classList.remove('on'); };
+      s.addEventListener('pointerenter',abrir);
+      s.addEventListener('pointerleave',()=>{ setTimeout(cerrar,120); });
+      brote.addEventListener('pointerenter',()=>{dentro=true;});
+      brote.addEventListener('pointerleave',()=>{dentro=false;cerrar();});
+      // en pantalla táctil no hay hover: los puntitos abren y cierran
+      s.querySelector('.pts')?.addEventListener('pointerdown',e=>{
+        e.stopPropagation(); e.preventDefault(); brote.classList.toggle('on'); });
     });
   });
 
@@ -562,7 +611,13 @@ const K_MIN=.12, K_MAX=3.2;
 let k=1,tx=0,ty=0, kObj=1,txObj=0,tyObj=0, anim=null;
 const QUIETO=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=v=>Math.min(K_MAX,Math.max(K_MIN,v));
-const pinta=()=>world.style.transform=`translate(${Math.round(tx*100)/100}px,${Math.round(ty*100)/100}px) scale(${k})`;
+/* `cerca` se prende cuando el zoom pasa el 75%. Es lo que hace aparecer los
+   puntitos de los hermanos con descendencia: de lejos el árbol tiene que
+   leerse limpio, y de cerca puede empezar a contar que hay más. */
+const pinta=()=>{
+  world.style.transform=`translate(${Math.round(tx*100)/100}px,${Math.round(ty*100)/100}px) scale(${k})`;
+  document.body.classList.toggle('cerca', k>=.75);
+};
 const nivel=document.getElementById('nivel');
 function pinta2(){ pinta(); if(nivel) nivel.textContent=Math.round(k*100)+'%'; }
 
