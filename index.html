@@ -378,7 +378,7 @@ let root='federico', sel=null, X={}, Y={}, alto={}, dibujados=[];
   if (pedida && P[pedida]) root = pedida; }
 
 /* ── el pedigrí: cada quien a la izquierda, sus padres a la derecha ── */
-function build(){
+function build(reencuadrar=true){
   layer.innerHTML=''; wires.innerHTML=''; heads.innerHTML=''; X={}; Y={}; alto={}; dibujados=[];
   const puestos=new Set(); let cursor=54, maxD=0;
 
@@ -613,9 +613,13 @@ function build(){
       const h=el.offsetHeight;
       if(Math.abs((medido[el.dataset.id]??0)-h)>1){ medido[el.dataset.id]=h; cambio=true; }
     });
-    if(cambio){ remidiendo=true; build(); remidiendo=false; return; }
+    if(cambio){ remidiendo=true; build(reencuadrar); remidiendo=false; return; }
   }
-  encuadrar();
+  /* Reencuadrar sólo cuando el rebuild lo pide. Si el árbol se reconstruye
+     porque el zoom cruzó el umbral, mover la vista sería doblemente malo:
+     te saca de donde estabas mirando, y al cambiar k vuelve a cruzar el
+     umbral — un lazo que terminaba trabando la página. */
+  if(reencuadrar) encuadrar();
 }
 let remidiendo=false;
 
@@ -629,22 +633,35 @@ const K_MIN=.12, K_MAX=3.2;
 let k=1,tx=0,ty=0, kObj=1,txObj=0,tyObj=0, anim=null;
 const QUIETO=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp=v=>Math.min(K_MAX,Math.max(K_MIN,v));
-/* `cerca` se prende cuando el zoom pasa el 70%, y eso hace crecer el árbol:
-   aparecen los hijos de los hermanos. Como esas filas ocupan lugar, hay que
-   REHACER el layout — dibujarlas encima se superpondría con lo de abajo.
-   El rebuild va detrás de un cambio de estado, no en cada cuadro: `pinta` se
-   llama sesenta veces por segundo mientras uno arrastra o hace zoom. */
-const pinta=()=>{
-  world.style.transform=`translate(${Math.round(tx*100)/100}px,${Math.round(ty*100)/100}px) scale(${k})`;
-  const ahora=k>=.7;
-  if(ahora!==cerca){
-    cerca=ahora;
-    document.body.classList.toggle('cerca',cerca);
+const pinta=()=>world.style.transform=`translate(${Math.round(tx*100)/100}px,${Math.round(ty*100)/100}px) scale(${k})`;
+
+/* Cuándo el árbol crece y muestra los hijos de los hermanos.
+ *
+ * Esto NO puede vivir dentro de `pinta`. Ahí estaba antes y trababa el zoom:
+ * `pinta` corre en cada cuadro del lazo de animación —sesenta veces por
+ * segundo— y `build()` rehace el DOM entero y encima lo mide. Reconstruir el
+ * árbol en cada cuadro congela la página.
+ *
+ * Ahora se revisa sólo cuando el movimiento SE DETIENE, y el rebuild sale del
+ * cuadro con un setTimeout para no correr dentro del requestAnimationFrame.
+ *
+ * Y va con histéresis —prende al 75%, apaga al 65%— porque con un solo umbral
+ * quedarse justo encima lo hacía prender y apagar sin parar. */
+const CERCA_ON=.75, CERCA_OFF=.65;
+let rehaciendo=false;
+function revisarCerca(){
+  const ahora = cerca ? k>=CERCA_OFF : k>=CERCA_ON;
+  if(ahora===cerca||rehaciendo) return;
+  cerca=ahora;
+  document.body.classList.toggle('cerca',cerca);
+  rehaciendo=true;
+  setTimeout(()=>{
     const guardado=sel;
-    build();
+    build(false);            // sin reencuadrar: el que mira se queda donde está
     if(guardado&&P[guardado]) show(guardado);
-  }
-};
+    rehaciendo=false;
+  },0);
+}
 const nivel=document.getElementById('nivel');
 function pinta2(){ pinta(); if(nivel) nivel.textContent=Math.round(k*100)+'%'; }
 
@@ -660,7 +677,7 @@ function corre(){
     k+=(kObj-k)*e; tx+=(txObj-tx)*e; ty+=(tyObj-ty)*e;
     if(Math.abs(kObj-k)>.0004||Math.abs(txObj-tx)>.3||Math.abs(tyObj-ty)>.3){
       pinta2(); anim=requestAnimationFrame(paso);
-    }else{ k=kObj; tx=txObj; ty=tyObj; pinta2(); anim=null; }
+    }else{ k=kObj; tx=txObj; ty=tyObj; pinta2(); anim=null; revisarCerca(); }
   };
   anim=requestAnimationFrame(paso);
 }
@@ -668,7 +685,7 @@ function frena(){ if(anim){cancelAnimationFrame(anim); anim=null;} kObj=k; txObj
 function hacia(nk,ntx,nty,suave=true){
   kObj=clamp(nk); txObj=ntx; tyObj=nty;
   if(suave&&!QUIETO) corre();
-  else { if(anim){cancelAnimationFrame(anim);anim=null;} k=kObj; tx=txObj; ty=tyObj; pinta2(); }
+  else { if(anim){cancelAnimationFrame(anim);anim=null;} k=kObj; tx=txObj; ty=tyObj; pinta2(); revisarCerca(); }
 }
 /* El zoom se ancla en un punto de la pantalla: ese punto no se mueve. Se calcula
    sobre el DESTINO, no sobre el estado actual, así varios pasos seguidos de
