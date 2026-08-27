@@ -347,12 +347,30 @@ const CW=196, CH=60, GX=78, GY=22, SIB=15;
  * dibujo: si no, se superpondrían con lo que tienen debajo. Por eso al cruzar
  * el umbral de zoom el árbol se reconstruye entero. */
 let cerca=false;
-const HIJOS_MAX=6;
-const filasDeHermanos=id=>hermanos(id).reduce((n,h)=>{
-  if(!cerca) return n+1;
-  const c=kids(h).length;
-  return n+1+Math.min(c,HIJOS_MAX)+(c>HIJOS_MAX?1:0);
-},0);
+const HIJOS_MAX=6, NIVEL_MAX=3;
+
+/* La descendencia de un hermano, aplanada en filas con su nivel de sangría.
+ *
+ * Baja hasta NIVEL_MAX generaciones: los hijos, los nietos y los bisnietos.
+ * Franca tuvo a Anna, y Anna a Chiara y Giulia — cortar en un solo nivel
+ * escondía justo lo que hace interesante a esa rama.
+ *
+ * Una sola función para contar y para dibujar. Si el conteo y el dibujo
+ * usaran listas distintas, el alto reservado no coincidiría con lo pintado y
+ * las filas se montarían sobre lo de abajo. */
+function descendencia(h){
+  const filas=[];
+  const baja=(x,nivel)=>{
+    if(nivel>NIVEL_MAX) return;
+    const cs=kids(x);
+    cs.slice(0,HIJOS_MAX).forEach(c=>{ filas.push({id:c,nivel}); baja(c,nivel+1); });
+    if(cs.length>HIJOS_MAX) filas.push({mas:cs.length-HIJOS_MAX,de:x,nivel});
+  };
+  baja(h,1);
+  return filas;
+}
+const filasDeHermanos=id=>hermanos(id).reduce((n,h)=>
+  n+1+(cerca?descendencia(h).length:0),0);
 /* Parentesco visto desde la raíz. Después de tatarabuelos el castellano se
    queda sin palabras de uso corriente, así que se numeran. */
 const PARENTESCO=d=>['','Padres','Abuelos','Bisabuelos','Tatarabuelos',
@@ -572,31 +590,28 @@ function build(reencuadrar=true){
       fila++;
       if(!cerca||!hijos.length) return;
 
-      /* Los hijos, como ramas: sangrados bajo su padre y colgando de una línea
-         vertical que baja desde él. Se cortan en HIJOS_MAX y la última fila
-         dice cuántos faltan — Beatriz tuvo once y once filas taparían media
-         pantalla. La ficha los lista todos igual. */
-      const muestra=hijos.slice(0,HIJOS_MAX);
-      muestra.forEach(c=>{
+      /* La descendencia, como ramas: cada generación un poco más sangrada que
+         la anterior, colgando de un codito. Se corta en HIJOS_MAX por persona
+         —Beatriz tuvo once y once filas taparían media pantalla— y en
+         NIVEL_MAX generaciones. La ficha los lista todos igual. */
+      descendencia(h).forEach(f=>{
+        const sangria=24+(f.nivel-1)*11;
         const n=document.createElement('button');
-        n.className='hijo'; n.dataset.id=c;
-        n.style.cssText=`left:${X[id]+24}px;top:${base+fila*SIB}px;width:${CW-24}px`;
-        n.innerHTML=`<span class="cod"></span><b>${P[c].n}</b>${yearOf(c)<9999?' '+yearOf(c):''}`;
-        n.title=`${P[c].n} · hijo/a de ${P[h].n}`;
-        n.onclick=e=>{e.stopPropagation();show(c);};
+        n.style.cssText=`left:${X[id]+sangria}px;top:${base+fila*SIB}px;width:${CW-sangria}px`;
+        if(f.mas){
+          n.className='hijo mas';
+          n.innerHTML=`<span class="cod"></span>y ${f.mas} más`;
+          n.title=`Ver la ficha de ${P[f.de].n}, que los lista a todos`;
+          n.onclick=e=>{e.stopPropagation();show(f.de);};
+        }else{
+          n.className='hijo'; n.dataset.id=f.id;
+          n.innerHTML=`<span class="cod"></span><b>${P[f.id].n}</b>${yearOf(f.id)<9999?' '+yearOf(f.id):''}`;
+          n.title=`${P[f.id].n} · desciende de ${P[h].n}`;
+          n.onclick=e=>{e.stopPropagation();show(f.id);};
+        }
         layer.appendChild(n);
         fila++;
       });
-      if(hijos.length>HIJOS_MAX){
-        const mas=document.createElement('button');
-        mas.className='hijo mas';
-        mas.style.cssText=`left:${X[id]+24}px;top:${base+fila*SIB}px;width:${CW-24}px`;
-        mas.innerHTML=`<span class="cod"></span>y ${hijos.length-HIJOS_MAX} más`;
-        mas.title=`Ver la ficha de ${P[h].n}, que los lista a todos`;
-        mas.onclick=e=>{e.stopPropagation();show(h);};
-        layer.appendChild(mas);
-        fila++;
-      }
     });
   });
 
