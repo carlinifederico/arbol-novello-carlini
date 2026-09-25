@@ -852,6 +852,10 @@ function suelta(e){
   dedos.delete(e.pointerId);
   if(dedos.size>=1){ arranca(); return; }          // quedaba un dedo: rebasar, sin salto
   gesto=null; vp.classList.remove('drag');
+  /* El pellizco escribe k directo, sin pasar por el lazo de `corre`, así que
+     nadie revisaba el umbral: en el teléfono —donde se acerca sólo con los
+     dedos— los hijos de los hermanos no aparecían nunca. Se revisa al soltar. */
+  revisarCerca();
   // inercia: sólo si el tirón fue de verdad
   if(!QUIETO && Math.hypot(vx,vy)>4){
     const paso=()=>{
